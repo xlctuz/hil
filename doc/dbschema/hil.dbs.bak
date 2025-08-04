@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="hil" database="MySql" id="4e9102cf-f737-4a36-bcb4-fd0793ff2d5f" >
+	<schema name="schema_hil" >
+		<table name="ao_card" prior="ao_ca" >
+			<column name="id" type="INT" mandatory="y" unsigned="y" >
+				<identity><![CDATA[AUTO_INCREMENT]]></identity>
+			</column>
+			<column name="model" type="VARCHAR" length="20" />
+			<column name="channel_count" type="INT" unsigned="y" />
+			<index name="pk_ao_card" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<options><![CDATA[engine=InnoDB]]></options>
+		</table>
+		<table name="ao_config" prior="ao_confi" >
+			<column name="ao_card_id" type="INT" mandatory="y" unsigned="y" />
+			<column name="project_id" type="INT" mandatory="y" unsigned="y" />
+			<column name="channel_index" type="INT" mandatory="y" unsigned="y" />
+			<index name="pk_ao_config" unique="PRIMARY_KEY" >
+				<column name="project_id" />
+				<column name="ao_card_id" />
+				<column name="channel_index" />
+			</index>
+			<fk name="fk_ao_config_ao_card" to_schema="schema_hil" to_table="ao_card" >
+				<fk_column name="ao_card_id" pk="id" />
+			</fk>
+			<fk name="fk_ao_config_project" to_schema="schema_hil" to_table="project" >
+				<fk_column name="project_id" pk="id" />
+			</fk>
+			<options><![CDATA[engine=InnoDB]]></options>
+		</table>
+		<table name="di_config" prior="do_config_0" >
+			<column name="dio_card_id" type="INT" mandatory="y" unsigned="y" />
+			<column name="project_id" type="INT" mandatory="y" unsigned="y" />
+			<column name="di_channel_index" prior="do_channel_index" type="INT" mandatory="y" unsigned="y" />
+			<index name="pk_di_config" unique="PRIMARY_KEY" >
+				<column name="project_id" />
+				<column name="dio_card_id" />
+				<column name="di_channel_index" />
+			</index>
+			<fk name="fk_di_config_dio_card" to_schema="schema_hil" to_table="dio_card" >
+				<fk_column name="dio_card_id" pk="id" />
+			</fk>
+			<fk name="fk_di_config_project" to_schema="schema_hil" to_table="project" >
+				<fk_column name="project_id" pk="id" />
+			</fk>
+			<options><![CDATA[engine=InnoDB]]></options>
+		</table>
+		<table name="dio_card" prior="dio_c" >
+			<column name="id" type="INT" mandatory="y" unsigned="y" >
+				<identity><![CDATA[AUTO_INCREMENT]]></identity>
+			</column>
+			<column name="model" type="VARCHAR" length="20" />
+			<column name="di_port_count" prior="port_count" type="INT" unsigned="y" />
+			<column name="do_port_count" type="INT" unsigned="y" />
+			<index name="pk_dio_card" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<options><![CDATA[engine=InnoDB]]></options>
+		</table>
+		<table name="do_config" prior="dio_config" >
+			<column name="dio_card_id" type="INT" mandatory="y" unsigned="y" />
+			<column name="project_id" type="INT" mandatory="y" unsigned="y" />
+			<column name="do_channel_index" prior="channel_index" type="INT" mandatory="y" unsigned="y" />
+			<column name="output" type="BOOLEAN" mandatory="y" />
+			<index name="pk_do_config" unique="PRIMARY_KEY" >
+				<column name="project_id" />
+				<column name="dio_card_id" />
+				<column name="do_channel_index" />
+			</index>
+			<fk name="fk_do_config_dio_card" to_schema="schema_hil" to_table="dio_card" >
+				<fk_column name="dio_card_id" pk="id" />
+			</fk>
+			<fk name="fk_do_config_project" to_schema="schema_hil" to_table="project" >
+				<fk_column name="project_id" pk="id" />
+			</fk>
+			<options><![CDATA[engine=InnoDB]]></options>
+		</table>
+		<table name="power_supply" prior="power_suppl" >
+			<column name="id" type="INT" mandatory="y" unsigned="y" >
+				<identity><![CDATA[AUTO_INCREMENT]]></identity>
+			</column>
+			<column name="model" type="VARCHAR" length="20" >
+				<comment><![CDATA[型号]]></comment>
+			</column>
+			<column name="channel_count" type="INT" unsigned="y" />
+			<index name="pk_power_supply" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<options><![CDATA[engine=InnoDB]]></options>
+		</table>
+		<table name="power_supply_config" prior="power_supply_con" >
+			<column name="power_supply_id" type="INT" mandatory="y" unsigned="y" />
+			<column name="project_id" type="INT" mandatory="y" unsigned="y" />
+			<column name="channel_index" type="INT" mandatory="y" unsigned="y" />
+			<column name="voltage" type="FLOAT" mandatory="y" unsigned="y" />
+			<column name="current_limit" type="FLOAT" mandatory="y" unsigned="y" />
+			<index name="pk_power_supply_config" unique="PRIMARY_KEY" >
+				<column name="project_id" />
+				<column name="power_supply_id" />
+				<column name="channel_index" />
+			</index>
+			<fk name="fk_power_supply_config" to_schema="schema_hil" to_table="power_supply" >
+				<fk_column name="power_supply_id" pk="id" />
+			</fk>
+			<fk name="fk_power_supply_config_project" to_schema="schema_hil" to_table="project" delete_action="cascade" update_action="cascade" >
+				<fk_column name="project_id" pk="id" />
+			</fk>
+			<options><![CDATA[engine=InnoDB]]></options>
+		</table>
+		<table name="project" prior="hil_project" >
+			<comment><![CDATA[项目]]></comment>
+			<column name="id" type="INT" mandatory="y" unsigned="y" >
+				<identity><![CDATA[AUTO_INCREMENT]]></identity>
+			</column>
+			<column name="name" type="VARCHAR" length="100" >
+				<comment><![CDATA[项目名称]]></comment>
+			</column>
+			<column name="slot_id" prior="channel_id" type="INT" mandatory="y" unsigned="y" />
+			<index name="pk_project" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="fk_project_channel" to_schema="schema_hil" to_table="slot" >
+				<fk_column name="slot_id" pk="id" />
+			</fk>
+			<options><![CDATA[engine=InnoDB]]></options>
+		</table>
+		<table name="resistence_card" prior="resister_card" >
+			<column name="id" type="INT" mandatory="y" unsigned="y" >
+				<identity><![CDATA[AUTO_INCREMENT]]></identity>
+			</column>
+			<column name="model" type="VARCHAR" length="20" />
+			<index name="pk_resister_card" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<options><![CDATA[engine=InnoDB]]></options>
+		</table>
+		<table name="resistence_config" prior="resistence_confi" >
+			<column name="resistence_card_id" type="INT" mandatory="y" unsigned="y" />
+			<column name="project_id" type="INT" mandatory="y" unsigned="y" />
+			<column name="is_open" type="BOOLEAN" mandatory="y" />
+			<column name="is_short" type="BOOLEAN" mandatory="y" />
+			<column name="setpoint" type="FLOAT" />
+			<column name="rlimit" type="FLOAT" />
+			<index name="pk_resistence_config" unique="PRIMARY_KEY" >
+				<column name="project_id" />
+				<column name="resistence_card_id" />
+			</index>
+			<fk name="fk_resistence_config" to_schema="schema_hil" to_table="resistence_card" >
+				<fk_column name="resistence_card_id" pk="id" />
+			</fk>
+			<fk name="fk_resistence_config_project" to_schema="schema_hil" to_table="project" >
+				<fk_column name="project_id" pk="id" />
+			</fk>
+			<options><![CDATA[engine=InnoDB]]></options>
+		</table>
+		<table name="slot" prior="channel" >
+			<column name="id" type="INT" mandatory="y" unsigned="y" >
+				<identity><![CDATA[AUTO_INCREMENT]]></identity>
+			</column>
+			<column name="number" type="INT" unsigned="y" >
+				<comment><![CDATA[编号]]></comment>
+			</column>
+			<index name="pk_hil_channel" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<options><![CDATA[engine=InnoDB]]></options>
+		</table>
+	</schema>
+	<layout name="Diagram" id="2301171b-fa97-4604-8b2c-29174cf57c8d" show_relation="columns" >
+		<entity schema="schema_hil" name="dio_card" color="C1D8EE" x="76" y="114" />
+		<entity schema="schema_hil" name="ao_card" color="C1D8EE" x="57" y="494" />
+		<entity schema="schema_hil" name="ao_config" color="C1D8EE" x="399" y="494" />
+		<entity schema="schema_hil" name="do_config" color="C1D8EE" x="418" y="76" />
+		<entity schema="schema_hil" name="di_config" color="3986C1" x="323" y="304" />
+		<entity schema="schema_hil" name="project" color="C1D8EE" x="703" y="266" />
+		<entity schema="schema_hil" name="power_supply_config" color="C1D8EE" x="950" y="437" />
+		<entity schema="schema_hil" name="slot" color="C1D8EE" x="950" y="57" />
+		<entity schema="schema_hil" name="power_supply" color="C1D8EE" x="1292" y="437" />
+		<entity schema="schema_hil" name="resistence_card" color="C1D8EE" x="114" y="741" />
+		<entity schema="schema_hil" name="resistence_config" color="C1D8EE" x="627" y="722" />
+	</layout>
+</project>
