@@ -252,12 +252,12 @@ if __name__ == "__main__":
     print(f"{Channel.CH1}")
     with open_power_supply("ASRL3::INSTR", 9600) as ps:
         print(f"设备ID: {ps.get_idn().strip()}")
-        ps.set_voltage_current(Channel.CH1, 10, 2)
+        # ps.set_voltage_current(Channel.CH1, 10, 2)
         print(f"通道1 电压: {ps.get_voltage(1)}")
         print(f"通道1 电流: {ps.get_current(1)}")
 
         print(f"关闭电源")
-        ps.set_on_off(IO.OFF, Channel.CH1)
+        # ps.set_on_off(IO.OFF, Channel.CH1)
         time.sleep(2)
 
         print(f"通道1 测量电压: {ps.measure_voltage(Channel.CH1)}")
@@ -268,7 +268,7 @@ if __name__ == "__main__":
         print(f"通道2 测量功率: {ps.measure_power(Channel.CH2)}")
 
         print(f"开启电源")
-        ps.set_on_off(IO.ON, Channel.CH1)
+        # ps.set_on_off(IO.ON, Channel.CH1)
         time.sleep(1)
 
         print(f"通道1 测量电压: {ps.measure_voltage(Channel.CH1)}")

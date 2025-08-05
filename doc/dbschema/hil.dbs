@@ -47,6 +47,7 @@
 			<options><![CDATA[engine=InnoDB]]></options>
 		</table>
 		<table name="dio_card" prior="dio_c" >
+			<comment><![CDATA[数字IO配置卡, 支持数字IO的功能]]></comment>
 			<column name="id" type="INT" mandatory="y" unsigned="y" >
 				<identity><![CDATA[AUTO_INCREMENT]]></identity>
 			</column>
@@ -111,7 +112,7 @@
 			<options><![CDATA[engine=InnoDB]]></options>
 		</table>
 		<table name="project" prior="hil_project" >
-			<comment><![CDATA[项目]]></comment>
+			<comment><![CDATA[创建项目配置，隶属于每个通道(slot)。]]></comment>
 			<column name="id" type="INT" mandatory="y" unsigned="y" >
 				<identity><![CDATA[AUTO_INCREMENT]]></identity>
 			</column>
@@ -174,12 +175,15 @@
 		<entity schema="schema_hil" name="ao_config" color="C1D8EE" x="399" y="494" />
 		<entity schema="schema_hil" name="do_config" color="C1D8EE" x="418" y="76" />
 		<entity schema="schema_hil" name="di_config" color="3986C1" x="323" y="304" />
-		<entity schema="schema_hil" name="project" color="C1D8EE" x="703" y="266" />
 		<entity schema="schema_hil" name="power_supply_config" color="C1D8EE" x="950" y="437" />
 		<entity schema="schema_hil" name="slot" color="C1D8EE" x="950" y="57" />
 		<entity schema="schema_hil" name="power_supply" color="C1D8EE" x="1292" y="437" />
 		<entity schema="schema_hil" name="resistence_card" color="C1D8EE" x="114" y="741" />
 		<entity schema="schema_hil" name="resistence_config" color="C1D8EE" x="627" y="722" />
+		<entity schema="schema_hil" name="project" color="C1D8EE" x="703" y="266" />
 		<entity schema="schema_hil" name="dio_card" color="C1D8EE" x="76" y="114" />
+		<shape x="1311" y="95" style="Rectangle" color="FF0000" >
+			<comment><![CDATA[test]]></comment>
+		</shape>
 	</layout>
 </project>

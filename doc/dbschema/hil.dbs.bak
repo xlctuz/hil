@@ -53,6 +53,8 @@
 			<column name="model" type="VARCHAR" length="20" />
 			<column name="di_port_count" prior="port_count" type="INT" unsigned="y" />
 			<column name="do_port_count" type="INT" unsigned="y" />
+			<column name="di_channel_count" type="INT" unsigned="y" />
+			<column name="do_channel_count" type="INT" unsigned="y" />
 			<index name="pk_dio_card" unique="PRIMARY_KEY" >
 				<column name="id" />
 			</index>
@@ -168,7 +170,6 @@
 		</table>
 	</schema>
 	<layout name="Diagram" id="2301171b-fa97-4604-8b2c-29174cf57c8d" show_relation="columns" >
-		<entity schema="schema_hil" name="dio_card" color="C1D8EE" x="76" y="114" />
 		<entity schema="schema_hil" name="ao_card" color="C1D8EE" x="57" y="494" />
 		<entity schema="schema_hil" name="ao_config" color="C1D8EE" x="399" y="494" />
 		<entity schema="schema_hil" name="do_config" color="C1D8EE" x="418" y="76" />
@@ -179,5 +180,6 @@
 		<entity schema="schema_hil" name="power_supply" color="C1D8EE" x="1292" y="437" />
 		<entity schema="schema_hil" name="resistence_card" color="C1D8EE" x="114" y="741" />
 		<entity schema="schema_hil" name="resistence_config" color="C1D8EE" x="627" y="722" />
+		<entity schema="schema_hil" name="dio_card" color="C1D8EE" x="76" y="114" />
 	</layout>
 </project>

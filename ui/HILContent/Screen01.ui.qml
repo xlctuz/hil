@@ -10,7 +10,6 @@ import QtQuick 6.7
 import QtQuick.Controls 6.7
 import HIL
 import QtQuick.Layouts
-import QtCharts
 import QtQuick.Studio.DesignEffects
 
 Rectangle {
@@ -32,6 +31,7 @@ Rectangle {
             onClicked: animation.start()
         }
     }
+
 
     Text {
         id: label
@@ -61,6 +61,7 @@ Rectangle {
             }
         }
     }
+
 
     ColumnLayout {
         id: columnLayout
@@ -398,6 +399,8 @@ Rectangle {
 
                                     TabBar {
                                         id: tabBar3
+                                        Layout.fillWidth: true
+                                        Layout.preferredWidth: 900
                                         currentIndex: swipeView.currentIndex
 
                                         TabButton {
@@ -482,6 +485,7 @@ Rectangle {
             }
         }
     }
+
     states: [
         State {
             name: "clicked"
@@ -497,7 +501,7 @@ Rectangle {
 
 /*##^##
 Designer {
-    D{i:0;formeditorColor:"#00000c"}D{i:17;invisible:true}D{i:85}D{i:88}
+    D{i:0;formeditorColor:"#00000c"}D{i:18;invisible:true}
 }
 ##^##*/
 
