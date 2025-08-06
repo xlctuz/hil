@@ -1,4 +1,6 @@
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Property
+
+from .channel import Channel
 
 
 class App(QObject):
@@ -7,5 +9,7 @@ class App(QObject):
 
         self._channels = [Channel(0), Channel(1), Channel(2)]
 
-    # TODO, 导出channel属性给QML使用
+    @Property(list, constant=True)
+    def channels(self):
+        return self._channels
 
