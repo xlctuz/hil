@@ -3,6 +3,7 @@ import pyvisa
 from contextlib import contextmanager
 from enum import StrEnum, auto
 import time
+from PySide6.QtCore import QObject
 
 class Power_supply_error(Exception):
     pass
@@ -141,11 +142,24 @@ class Power_supply_command():
             return self
 
 
-class Power_supply_it6302:
+# TODO 支持sqlAlchemy ORM持久化
+class Power_supply_it6302_channel(QObject):
+    def __init__(self, index, parent=None):
+        super().__init__(parent)
+        self._index = index;
+
+
+
+# TODO 支持sqlAlchemy ORM持久化
+class Power_supply_it6302(QObject):
     def __init__(self, resource_name : str, baud_rate: int):
+        super().__init__(parent)
         self.resource_name = resource_name
         self.baud_rate = baud_rate
         self.instrument = None
+        self._channels = [Power_supply_it6302_channel(0),
+                          Power_supply_it6302_channel(1),
+                          Power_supply_it6302_channel(2)]
 
 
     def open(self):
@@ -277,4 +291,3 @@ if __name__ == "__main__":
         print(f"通道2 测量电压: {ps.measure_voltage(Channel.CH2)}")
         print(f"通道2 测量电流: {ps.measure_current(Channel.CH2)}")
         print(f"通道2 测量功率: {ps.measure_power(Channel.CH2)}")
-
