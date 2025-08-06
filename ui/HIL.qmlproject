@@ -7,7 +7,7 @@ Project {
     mainFile: "HILContent/App.qml"
     mainUiFile: "HILContent/Screen01.ui.qml"
     targetDirectory: "/opt/HIL"
-    enablePythonGeneration: true
+    enablePythonGeneration: false
     widgetApp: true
     importPaths: [ "." ]
 
