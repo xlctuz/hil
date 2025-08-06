@@ -7,4 +7,5 @@ class App(QObject):
 
         self._channels = [Channel(0), Channel(1), Channel(2)]
 
+    # TODO, 导出channel属性给QML使用
 
