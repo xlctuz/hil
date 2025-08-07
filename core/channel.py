@@ -1,7 +1,18 @@
+from sqlalchemy import Column, Integer
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
 
-class Channel():
-    #TODO 使用sqlalchemy 为Channel添加数据库类型, 并添加主键id字段
-    #TODO 实现跟Project的一对多关系, 一个通道包含多个项目
+Base = declarative_base()
+
+
+class Channel(Base):
+    __tablename__ = 'channels'
+
+    id = Column(Integer, primary_key=True)
+    index = Column(Integer, nullable=False)
+
+    # one-to-many: a channel has many projects
+    projects = relationship("Project", back_populates="channel")
+
     def __init__(self, index):
-        self._index = index;
-        self._projects = []
+        self.index = index
