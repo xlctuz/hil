@@ -3,7 +3,6 @@ import pyvisa
 from contextlib import contextmanager
 from enum import StrEnum, auto
 import time
-from PySide6.QtCore import QObject
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -146,8 +145,7 @@ class Power_supply_command():
             return self
 
 
-# TODO 支持sqlAlchemy ORM持久化
-class Power_supply_it6302_channel(Base, QObject):
+class Power_supply_it6302_channel(Base):
     __tablename__ = 'power_supply_it6302_channels'
 
     id = Column(Integer, primary_key=True)
@@ -165,8 +163,7 @@ class Power_supply_it6302_channel(Base, QObject):
         self.current = current
 
 
-# TODO 支持sqlAlchemy ORM持久化
-class Power_supply_it6302(Base, QObject):
+class Power_supply_it6302(Base):
     __tablename__ = 'power_supply_it6302'
 
     id = Column(Integer, primary_key=True)
