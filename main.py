@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # Create a sample project for each channel
     if session.query(Project).count() == 0:
         logger.info("Creating and saving new projects...")
-        
+
         # Project 1 for Channel 1
         project1 = Project(name="项目A")
         ps1 = Power_supply_it6302(resource_name="ASRL1::INSTR", baud_rate=9600)
@@ -74,6 +74,14 @@ if __name__ == "__main__":
         # Project 2 for Channel 1
         project2 = Project(name="项目B")
         project2.channel = channels[0]
+        ps2 = Power_supply_it6302(resource_name="ASRL1::INSTR", baud_rate=9600)
+        ps2.channels[0].voltage = 3.0
+        ps2.channels[0].current = 2.0
+        ps2.channels[1].voltage = 13.0
+        ps2.channels[1].current = 2.1
+        ps2.channels[2].voltage = 4.3
+        ps2.channels[2].current = 2.2
+        project2.power_supply = ps2
         session.add(project2)
 
         # Project 3 for Channel 2

@@ -51,7 +51,7 @@ class ProjectModel(QAbstractListModel):
         if 0 <= row < len(self._projects):
             return self._projects[row]
         return None
-    
+
     def set_checked(self, row, checked=True):
         if 0 <= row < len(self._projects):
             # Uncheck others
@@ -59,7 +59,7 @@ class ProjectModel(QAbstractListModel):
                 if i != row and getattr(p, 'checked', False):
                     p.checked = False
                     self.dataChanged.emit(self.index(i, 0), self.index(i, 0), [self.CheckedRole])
-            
+
             # Check selected
             project = self._projects[row]
             project.checked = checked
@@ -126,12 +126,12 @@ class ConfigViewModel(QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        
+
         db_path = 'project.db'
         self._engine = create_engine(f'sqlite:///{db_path}')
         Base.metadata.create_all(self._engine)
         self._Session = sessionmaker(bind=self._engine)
-        
+
         self._project_model = ProjectModel()
         self._current_project = None
         self._current_project_proxy = ProjectProxy(None)
@@ -155,7 +155,7 @@ class ConfigViewModel(QObject):
             self._project_model.set_projects(projects)
         finally:
             session.close()
-        
+
         self._current_project = None
         self._current_project_proxy = ProjectProxy(None)
         self.currentProjectChanged.emit()

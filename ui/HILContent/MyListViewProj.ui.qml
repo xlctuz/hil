@@ -19,7 +19,7 @@ ListView {
 
         Connections {
             target: btnProject
-            onClicked: {
+            function onClicked() {
                 configViewModel.selectProject(index)
             }
         }

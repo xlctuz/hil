@@ -9,6 +9,7 @@ Pane {
     width: 1800
     height: 800
     z: 0
+    property var powerSupply: null
 
     ColumnLayout {
         id: columnLayout
@@ -61,8 +62,8 @@ Pane {
                     Layout.fillWidth: true
                     title: qsTr("通道1")
                     voltagePlaceholder: qsTr("电压(0-30Volt)")
-                    voltageField.text: configViewModel.currentProject ? configViewModel.currentProject.powerSupply.ch1.voltage : ""
-                    currentField.text: configViewModel.currentProject ? configViewModel.currentProject.powerSupply.ch1.current : ""
+                    voltageField.text: powerSupply?.ch1?.voltage || ""
+                    currentField.text: powerSupply?.ch1?.current || ""
                 }
 
                 PowerSupplyChannel {
@@ -71,8 +72,8 @@ Pane {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     voltagePlaceholder: qsTr("电压(0-30Volt)")
-                    voltageField.text: configViewModel.currentProject ? configViewModel.currentProject.powerSupply.ch2.voltage : ""
-                    currentField.text: configViewModel.currentProject ? configViewModel.currentProject.powerSupply.ch2.current : ""
+                    voltageField.text: powerSupply?.ch2?.voltage || ""
+                    currentField.text: powerSupply?.ch2?.current || ""
                 }
 
                 PowerSupplyChannel {
@@ -81,8 +82,8 @@ Pane {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     voltagePlaceholder: qsTr("电压(0-5Volt)")
-                    voltageField.text: configViewModel.currentProject ? configViewModel.currentProject.powerSupply.ch3.voltage : ""
-                    currentField.text: configViewModel.currentProject ? configViewModel.currentProject.powerSupply.ch3.current : ""
+                    voltageField.text: powerSupply?.ch3?.voltage || ""
+                    currentField.text: powerSupply?.ch3?.current || ""
                 }
             }
         }

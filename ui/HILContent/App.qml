@@ -15,8 +15,10 @@ Window {
     Screen01 {
         id: mainScreen
         anchors.fill: parent
-    }
 
+        /* configView.Component.onCompleted: configViewModel.onConfigViewCompleted */
+        /* tabBarChannel.onCurrentIndexChanged: function(currentIndex) { configViewModel.selectChannel(currentIndex) } */
+    }
 
     function selectButton(model, index) {
 
@@ -31,5 +33,17 @@ Window {
             }
         }
     }
-}
 
+    Connections {
+        target: mainScreen.configView
+        Component.onCompleted: function() {configViewModel.selectChannel(0) }
+    }
+
+    Connections {
+        target: mainScreen.configView.tabBarChannel
+        function onCurrentIndexChanged() {
+            console.log(`channel index changed ${target.currentIndex}`)
+            configViewModel.selectChannel(target.currentIndex)
+        }
+    }
+}
