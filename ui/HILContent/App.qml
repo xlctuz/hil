@@ -46,4 +46,19 @@ Window {
             configViewModel.selectChannel(target.currentIndex)
         }
     }
+
+    Connections {
+        target: mainScreen.configView.btnCreateProject
+        function onClicked() {
+            var newName = "New Project " + (configViewModel.projectsModel.rowCount + 1)
+            configViewModel.addProject(newName)
+        }
+    }
+
+    Connections {
+        target: mainScreen.configView.btnDeleteProject
+        function onClicked() {
+            configViewModel.deleteCurrentProject()
+        }
+    }
 }

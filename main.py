@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     # --- Database Setup and Seeding ---
     engine = create_engine('sqlite:///project.db')
-    Base.metadata.drop_all(engine) # For clean test runs
+    # Base.metadata.drop_all(engine) # For clean test runs
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     session = Session()

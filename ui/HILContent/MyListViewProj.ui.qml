@@ -24,6 +24,27 @@ ListView {
             }
         }
     }
+
+    footer: Row {
+        id: add_row
+        width: 200
+        spacing: 5
+
+        Button {
+            id: btnCreateProject
+            width: 200
+            height: 55
+            text: "+"
+        }
+
+        Connections {
+            target: btnCreateProject
+            function onClicked() {
+                var newName = "New Project " + (configViewModel.projectsModel.rowCount + 1)
+                configViewModel.addProject(newName)
+            }
+        }
+    }
 }
 
 /*##^##

@@ -6,6 +6,7 @@ ColumnLayout {
     id: configView
     visible: true
     property alias tabBarChannel: tabBarChannel
+    property alias btnDeleteProject: btnDeleteProject
     RowLayout {
         id: rowLayout2
         width: 100
@@ -87,18 +88,6 @@ ColumnLayout {
                         anchors.leftMargin: 0
                         anchors.topMargin: 0
                         model: configViewModel.projectsModel
-                        footer: Row {
-                            id: row
-                            width: 200
-                            spacing: 5
-
-                            Button {
-                                id: btnProject
-                                width: 200
-                                height: 55
-                                text: "+"
-                            }
-                        }
                     }
                 }
             }
@@ -124,7 +113,7 @@ ColumnLayout {
                         Layout.fillWidth: true
 
                         TextField {
-                            id: textField
+                            id: textFieldProjectName
                             Layout.preferredWidth: 200
                             placeholderText: qsTr("项目名称")
                             text: configViewModel.currentProject.name || ""
@@ -139,7 +128,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                         }
                         Button {
-                            id: deleteProj
+                            id: btnDeleteProject
                             text: qsTr("删除")
                         }
                     }

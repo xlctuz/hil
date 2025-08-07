@@ -19,6 +19,8 @@ Rectangle {
 
     color: Constants.backgroundColor
     property alias configView: configView
+    /* property alias btnCreateProject: configView.btnCreateProject */
+    /* property alias btnDeleteProject: configView.btnDeleteProject */
 
     ColumnLayout {
         id: columnLayout

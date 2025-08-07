@@ -135,6 +135,7 @@ class ConfigViewModel(QObject):
         self._project_model = ProjectModel()
         self._current_project = None
         self._current_project_proxy = ProjectProxy(None)
+        self._current_channel_index = 0
 
     @Property(QObject, constant=True)
     def projectsModel(self):
@@ -146,6 +147,7 @@ class ConfigViewModel(QObject):
 
     @Slot(int)
     def selectChannel(self, index):
+        self._current_channel_index = index
         print(f"Channel {index + 1} selected")
         session = self._Session()
         try:
@@ -161,6 +163,54 @@ class ConfigViewModel(QObject):
         self.currentProjectChanged.emit()
         if self._project_model.rowCount() > 0:
             self.selectProject(0)
+
+    @Slot(str)
+    def addProject(self, name):
+        if not name:
+            return
+        print(f"Adding project {name} to channel {self._current_channel_index + 1}")
+        session = self._Session()
+        try:
+            channel_id = self._current_channel_index + 1
+            # Create a new project
+            new_project = Project(name=name)
+            new_project.channel_id = channel_id
+
+            # Create default power supply config
+            power_supply = Power_supply_it6302(resource_name="ASRL3::INSTR", baud_rate=9600)
+            new_project.power_supply = power_supply
+
+            session.add(new_project)
+            session.commit()
+            print(f"Project {name} added with id {new_project.id}")
+        finally:
+            session.close()
+
+        # Refresh the project list
+        self.selectChannel(self._current_channel_index)
+
+    @Slot()
+    def deleteCurrentProject(self):
+        if not self._current_project:
+            print("No project selected to delete.")
+            return
+
+        print(f"Deleting project {self._current_project.name} (ID: {self._current_project.id})")
+        session = self._Session()
+        try:
+            # Re-attach the object to the session before deleting
+            project_to_delete = session.merge(self._current_project)
+            session.delete(project_to_delete)
+            session.commit()
+            print("Project deleted.")
+        except Exception as e:
+            print(f"Error deleting project: {e}")
+            session.rollback()
+        finally:
+            session.close()
+
+        # Refresh the project list for the current channel
+        self.selectChannel(self._current_channel_index)
 
     @Slot(int)
     def selectProject(self, index):
