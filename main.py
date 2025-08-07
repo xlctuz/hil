@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
         # Project 1 for Channel 1
         project1 = Project(name="项目A")
-        ps1 = Power_supply_it6302(resource_name="ASRL1::INSTR", baud_rate=9600)
+        ps1 = Power_supply_it6302(resource_name="ASRL3::INSTR", baud_rate=9600)
         ps1.channels[0].voltage = 5.0
         ps1.channels[0].current = 1.0
         ps1.channels[1].voltage = 15.0
@@ -74,7 +74,7 @@ if __name__ == "__main__":
         # Project 2 for Channel 1
         project2 = Project(name="项目B")
         project2.channel = channels[0]
-        ps2 = Power_supply_it6302(resource_name="ASRL1::INSTR", baud_rate=9600)
+        ps2 = Power_supply_it6302(resource_name="ASRL3::INSTR", baud_rate=9600)
         ps2.channels[0].voltage = 3.0
         ps2.channels[0].current = 2.0
         ps2.channels[1].voltage = 13.0
@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
         # Project 3 for Channel 2
         project3 = Project(name="项目C")
-        ps3 = Power_supply_it6302(resource_name="ASRL2::INSTR", baud_rate=115200)
+        ps3 = Power_supply_it6302(resource_name="ASRL3::INSTR", baud_rate=9600)
         ps3.channels[0].voltage = 2.0
         ps3.channels[0].current = 2.0
         ps3.channels[1].voltage = 12.0

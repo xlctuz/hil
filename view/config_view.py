@@ -10,7 +10,9 @@ from sqlalchemy.orm import sessionmaker, joinedload
 
 from core.channel import Base, Channel
 from core.project import Project
-from core.power_supply_it6302 import Power_supply_it6302, Power_supply_it6302_channel
+from core.power_supply_it6302 import Power_supply_it6302, Power_supply_it6302_channel, IO, Channel as PSChannel
+from core.visa_resource_manager import rm
+
 
 class ProjectModel(QAbstractListModel):
     NameRole = Qt.UserRole + 1
@@ -80,6 +82,9 @@ class PowerSupplyChannelProxy(QObject):
         return self._channel_data.current if self._channel_data and self._channel_data.current is not None else None
 
 class PowerSupplyProxy(QObject):
+    resourceNameChanged = Signal()
+    baudRateChanged = Signal()
+
     def __init__(self, power_supply_data, parent=None):
         super().__init__(parent)
         self._power_supply_data = power_supply_data
@@ -93,9 +98,18 @@ class PowerSupplyProxy(QObject):
         while len(self._channels) < 3:
             self._channels.append(PowerSupplyChannelProxy(None, self))
 
+    @Property(str, notify=resourceNameChanged)
+    def resource_name(self):
+        return self._power_supply_data.resource_name if self._power_supply_data else ""
+
+    @Property(int, notify=baudRateChanged)
+    def baud_rate(self):
+        return self._power_supply_data.baud_rate if self._power_supply_data else 9600
+
     @Property(QObject, constant=True)
     def ch1(self):
         return self._channels[0]
+
 
     @Property(QObject, constant=True)
     def ch2(self):
@@ -123,9 +137,11 @@ class ProjectProxy(QObject):
 
 class ConfigViewModel(QObject):
     currentProjectChanged = Signal()
+    powerSupplyTestFailed = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
+
 
         db_path = 'project.db'
         self._engine = create_engine(f'sqlite:///{db_path}')
@@ -144,6 +160,38 @@ class ConfigViewModel(QObject):
     @Property(QObject, notify=currentProjectChanged)
     def currentProject(self):
         return self._current_project_proxy
+
+    @Property('QVariant', constant=True)
+    def availableVisaResources(self):
+        try:
+            return list(rm.list_resources())
+        except Exception as e:
+            print(f"Could not list VISA resources: {e}")
+            return []
+
+    @Slot(str, int)
+    def setPowerSupplyConfig(self, resource_name, baud_rate):
+        if not self._current_project or not self._current_project.power_supply:
+            return
+
+        session = self._Session()
+        try:
+            power_supply = session.merge(self._current_project.power_supply)
+            power_supply.resource_name = resource_name
+            power_supply.baud_rate = baud_rate
+            session.commit()
+            print(f"Updated config for project {self._current_project.id}: Resource={resource_name}, Baudrate={baud_rate}")
+
+            self._current_project.power_supply.resource_name = resource_name
+            self._current_project.power_supply.baud_rate = baud_rate
+
+            self._current_project_proxy.powerSupply.resourceNameChanged.emit()
+            self._current_project_proxy.powerSupply.baudRateChanged.emit()
+        except Exception as e:
+            print(f"Error updating power supply config: {e}")
+            session.rollback()
+        finally:
+            session.close()
 
     @Slot(int)
     def selectChannel(self, index):
@@ -193,7 +241,7 @@ class ConfigViewModel(QObject):
     def setPowerSupplyVoltage(self, channel_index, voltage):
         if not self._current_project or not self._current_project.power_supply:
             return
-        
+
         session = self._Session()
         try:
             power_supply = session.merge(self._current_project.power_supply)
@@ -229,6 +277,79 @@ class ConfigViewModel(QObject):
                 self.currentProjectChanged.emit()
         except Exception as e:
             print(f"Error updating current: {e}")
+            session.rollback()
+        finally:
+            session.close()
+
+    @Slot(bool)
+    def togglePowerSupplyTest(self, testing):
+        if not self._current_project or not self._current_project.power_supply:
+            msg = "没有为测试选择项目."
+            print(msg)
+            self.powerSupplyTestFailed.emit(msg)
+            return
+
+        ps_config = self._current_project.power_supply
+        if not ps_config.resource_name:
+            msg = "电源资源名称未配置."
+            print(msg)
+            self.powerSupplyTestFailed.emit(msg)
+            return
+
+        ps_controller = Power_supply_it6302(ps_config.resource_name, ps_config.baud_rate)
+
+        try:
+            ps_controller.open()
+            print(f"Connected to power supply: {ps_controller.get_idn().strip()}")
+
+            if testing:
+                print("Starting power supply test...")
+                # Configure and enable channels
+                for i, ch_config in enumerate(ps_config.channels):
+                    channel_enum = PSChannel[f"CH{i+1}"]
+                    if ch_config.voltage is not None and ch_config.current is not None:
+                        print(f"Setting Channel {i+1}: V={ch_config.voltage}, C={ch_config.current}")
+                        ps_controller.set_voltage_current(channel_enum, ch_config.voltage, ch_config.current)
+                        ps_controller.set_on_off(IO.ON, channel_enum)
+                print("Test started.")
+            else:
+                print("Stopping power supply test...")
+                # Turn off all channels
+                ps_controller.set_on_off(IO.OFF, PSChannel.ALL)
+                print("Test stopped. All channels off.")
+
+        except Exception as e:
+            error_message = f"电源测试出错: {e}"
+            print(error_message)
+            self.powerSupplyTestFailed.emit(error_message)
+        finally:
+            if ps_controller.instrument and ps_controller.instrument.session is not None:
+                ps_controller.close()
+                print("Power supply connection closed.")
+
+    @Slot()
+    def resetPowerSupplySettings(self):
+        if not self._current_project or not self._current_project.power_supply:
+            print("No project or power supply selected.")
+            return
+
+        print(f"Resetting power supply settings for project {self._current_project.name}")
+        session = self._Session()
+        try:
+            power_supply = session.merge(self._current_project.power_supply)
+            for channel in power_supply.channels:
+                channel.voltage = None
+                channel.current = None
+            session.commit()
+            print("Power supply settings reset.")
+
+            # Refresh current project data to update UI
+            for channel_data in self._current_project.power_supply.channels:
+                channel_data.voltage = None
+                channel_data.current = None
+            self.currentProjectChanged.emit()
+        except Exception as e:
+            print(f"Error resetting power supply settings: {e}")
             session.rollback()
         finally:
             session.close()

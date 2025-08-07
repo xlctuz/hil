@@ -7,6 +7,7 @@ ColumnLayout {
     visible: true
     property alias tabBarChannel: tabBarChannel
     property alias btnDeleteProject: btnDeleteProject
+    property alias it6302Config: it6302Config
     RowLayout {
         id: rowLayout2
         width: 100

@@ -6,8 +6,8 @@ It is supposed to be strictly declarative and only uses a subset of QML. If you 
 this file manually, you might introduce QML code that is not supported by Qt Design Studio.
 Check out https://doc.qt.io/qtcreator/creator-quick-ui-forms.html for details on .ui.qml files.
 */
-import QtQuick 6.7
-import QtQuick.Controls 6.7
+import QtQuick
+import QtQuick.Controls
 import HIL
 import QtQuick.Layouts
 import QtQuick.Studio.DesignEffects
@@ -18,10 +18,11 @@ Rectangle {
     height: Constants.height
 
     color: Constants.backgroundColor
+    property alias mainStack: mainStack
     property alias configView: configView
+
     /* property alias btnCreateProject: configView.btnCreateProject */
     /* property alias btnDeleteProject: configView.btnDeleteProject */
-
     ColumnLayout {
         id: columnLayout
         anchors.fill: parent
@@ -131,10 +132,3 @@ Rectangle {
         }
     }
 }
-
-/*##^##
-Designer {
-    D{i:0}D{i:11;invisible:true}
-}
-##^##*/
-

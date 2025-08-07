@@ -40,7 +40,7 @@ ListView {
         Connections {
             target: btnCreateProject
             function onClicked() {
-                var newName = "New Project " + (configViewModel.projectsModel.rowCount + 1)
+                var newName = "New Project " + (configViewModel.projectsModel.rowCount() + 1)
                 configViewModel.addProject(newName)
             }
         }

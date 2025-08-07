@@ -1,8 +1,10 @@
 // Copyright (C) 2021 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-import QtQuick 6.7
+import QtQuick
 import HIL
+import QtQuick.Controls
+import QtQuick.Layouts
 
 Window {
     id: app
@@ -16,22 +18,6 @@ Window {
         id: mainScreen
         anchors.fill: parent
 
-        /* configView.Component.onCompleted: configViewModel.onConfigViewCompleted */
-        /* tabBarChannel.onCurrentIndexChanged: function(currentIndex) { configViewModel.selectChannel(currentIndex) } */
-    }
-
-    function selectButton(model, index) {
-
-        console.log(`model ${model.count}`)
-        for (var i = 0; i < model.count; i++) {
-            if (i !== index) {
-                model.set(i, { "checked": false });
-                console.log(`model checked ${model.get(i).checked}`)
-            }
-            else {
-                model.set(i, {"checked": true});
-            }
-        }
     }
 
     Connections {
@@ -48,17 +34,35 @@ Window {
     }
 
     Connections {
-        target: mainScreen.configView.btnCreateProject
+        target: mainScreen.configView.btnDeleteProject
         function onClicked() {
-            var newName = "New Project " + (configViewModel.projectsModel.rowCount + 1)
-            configViewModel.addProject(newName)
+            configViewModel.deleteCurrentProject()
+        }
+    }
+
+    Dialog {
+        id: errorDialog
+        title: "错误"
+        standardButtons: Dialog.Ok
+        modal: true
+        anchors.centerIn: parent
+
+        Label {
+            id: errorMessageLabel
+            text: ""
+            wrapMode: Text.WordWrap
         }
     }
 
     Connections {
-        target: mainScreen.configView.btnDeleteProject
-        function onClicked() {
-            configViewModel.deleteCurrentProject()
+        target: configViewModel
+        function onPowerSupplyTestFailed(message) {
+            errorMessageLabel.text = message
+            errorDialog.open()
+            // Reset the test button state
+            if (mainScreen.mainStack.currentItem === mainScreen.configView) {
+                mainScreen.configView.it6302Config.btnTest.checked = false
+            }
         }
     }
 }

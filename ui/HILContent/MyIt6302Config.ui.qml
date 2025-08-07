@@ -10,6 +10,7 @@ Pane {
     height: 800
     z: 0
     property var powerSupply: null
+    property alias btnTest: button1
 
     ColumnLayout {
         id: columnLayout
@@ -25,6 +26,29 @@ Pane {
                 id: rowLayout
                 anchors.fill: parent
 
+                Label {
+                    id: label
+                    text: qsTr("通道:")
+                }
+
+                ComboBox {
+                    id: comboBoxResource
+                    model: configViewModel.availableVisaResources
+                    currentIndex: model.indexOf(powerSupply.resource_name)
+
+                }
+
+                Label {
+                    id: label1
+                    text: qsTr("波特率:")
+                }
+
+                ComboBox {
+                    id: comboBoxBaud
+                    model: [9600, 19200, 38400, 57600, 115200]
+                    currentIndex: model.indexOf(powerSupply.baud_rate)
+                }
+
                 Item {
                     id: item1
                     Layout.fillHeight: true
@@ -36,10 +60,24 @@ Pane {
                     text: qsTr("重置")
                 }
 
+                Connections {
+                    target: button
+                    function onClicked() {
+                        configViewModel.resetPowerSupplySettings()
+                    }
+                }
+
                 Button {
                     id: button1
                     text: qsTr("测试")
                     checkable: true
+                }
+
+                Connections {
+                    target: button1
+                    function onClicked() {
+                        configViewModel.togglePowerSupplyTest(target.checked)
+                    }
                 }
             }
         }
@@ -127,4 +165,22 @@ Pane {
             }
         }
     }
+
+
+    Connections {
+        target: comboBoxResource
+        function onActivated(index) {
+            console.log(`power supply config resource ${comboBoxResource.currentText}`)
+            configViewModel.setPowerSupplyConfig(comboBoxResource.currentText, powerSupply.baud_rate)
+        }
+    }
+
+    Connections {
+        target: comboBoxBaud
+        function onActivated(index) {
+            console.log(`power supply config resource ${comboBoxBaud.currentText}`)
+            configViewModel.setPowerSupplyConfig(powerSupply.resource_name, comboBoxBaud.currentText)
+        }
+    }
+
 }
