@@ -95,7 +95,7 @@ Pane {
                 anchors.bottomMargin: 0
 
                 PowerSupplyChannel {
-                    id: groupBox
+                    id: ps_channel
                     Layout.fillHeight: true
                     Layout.fillWidth: true
                     title: qsTr("通道1")
@@ -104,21 +104,22 @@ Pane {
                     currentField.text: powerSupply?.ch1?.current || ""
 
                     Connections {
-                        target: groupBox.voltageField
+                        target: ps_channel.voltageField
                         function onEditingFinished() {
                             configViewModel.setPowerSupplyVoltage(0, parseFloat(target.text))
                         }
                     }
                     Connections {
-                        target: groupBox.currentField
+                        target: ps_channel.currentField
                         function onEditingFinished() {
                             configViewModel.setPowerSupplyCurrent(0, parseFloat(target.text))
                         }
                     }
+
                 }
 
                 PowerSupplyChannel {
-                    id: groupBox1
+                    id: ps_channel1
                     title: qsTr("通道2")
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -127,13 +128,13 @@ Pane {
                     currentField.text: powerSupply?.ch2?.current || ""
 
                     Connections {
-                        target: groupBox1.voltageField
+                        target: ps_channel1.voltageField
                         function onEditingFinished() {
                             configViewModel.setPowerSupplyVoltage(1, parseFloat(target.text))
                         }
                     }
                     Connections {
-                        target: groupBox1.currentField
+                        target: ps_channel1.currentField
                         function onEditingFinished() {
                             configViewModel.setPowerSupplyCurrent(1, parseFloat(target.text))
                         }
@@ -141,7 +142,7 @@ Pane {
                 }
 
                 PowerSupplyChannel {
-                    id: groupBox2
+                    id: ps_channel2
                     title: qsTr("通道3")
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -150,18 +151,41 @@ Pane {
                     currentField.text: powerSupply?.ch3?.current || ""
 
                     Connections {
-                        target: groupBox2.voltageField
+                        target: ps_channel2.voltageField
                         function onEditingFinished() {
                             configViewModel.setPowerSupplyVoltage(2, parseFloat(target.text))
                         }
                     }
                     Connections {
-                        target: groupBox2.currentField
+                        target: ps_channel2.currentField
                         function onEditingFinished() {
                             configViewModel.setPowerSupplyCurrent(2, parseFloat(target.text))
                         }
                     }
                 }
+
+                property int currentX: 0
+
+                Connections {
+                    target: configViewModel
+                    function onPowerSupplyDataUpdated(voltage, current, power) {
+                        console.log(`power supply data updated, ${voltage} - ${current} - ${power}`)
+                        ps_channel.voltageSeries.append(columnLayout2.currentX, voltage[0]);
+                        ps_channel.currentSeries.append(columnLayout2.currentX, current[0]);
+                        ps_channel.powerSeries.append(columnLayout2.currentX, power[0]);
+
+                        ps_channel1.voltageSeries.append(columnLayout2.currentX, voltage[1]);
+                        ps_channel1.currentSeries.append(columnLayout2.currentX, current[1]);
+                        ps_channel1.powerSeries.append(columnLayout2.currentX, power[1]);
+
+                        ps_channel2.voltageSeries.append(columnLayout2.currentX, voltage[2]);
+                        ps_channel2.currentSeries.append(columnLayout2.currentX, current[2]);
+                        ps_channel2.powerSeries.append(columnLayout2.currentX, power[2]);
+
+                        currentX++;
+                    }
+                }
+
             }
         }
     }

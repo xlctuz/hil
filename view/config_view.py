@@ -1,6 +1,7 @@
 import sys
 import os
-from PySide6.QtCore import QObject, Property, Slot, QAbstractListModel, QModelIndex, Qt, Signal
+from PySide6.QtCore import QObject, Property, Slot, QAbstractListModel, QModelIndex, Qt, Signal, QThread, QTimer
+from common.logger import logger
 
 # Add core to path to import models
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
@@ -12,6 +13,82 @@ from core.channel import Base, Channel
 from core.project import Project
 from core.power_supply_it6302 import Power_supply_it6302, Power_supply_it6302_channel, IO, Channel as PSChannel
 from core.visa_resource_manager import rm
+
+
+class PowerSupplyPoller(QObject):
+    polledData = Signal(dict)
+    finished = Signal()
+    error = Signal(str)
+
+    def __init__(self, resource_name, baud_rate, project, parent=None):
+        super().__init__(parent)
+        self._resource_name = resource_name
+        self._baud_rate = baud_rate
+        self._project = project
+        self._ps_controller = None
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self.poll)
+        self._running = False
+
+    def start(self):
+        try:
+            self._ps_controller = Power_supply_it6302(self._resource_name, self._baud_rate)
+            self._ps_controller.open()
+
+            # Set initial configuration from the project
+            ps_config = self._project.power_supply
+            for i, ch_config in enumerate(ps_config.channels):
+                channel_enum = PSChannel[f"CH{i+1}"]
+                if ch_config.voltage is not None and ch_config.current is not None:
+                    self._ps_controller.set_voltage_current(channel_enum, ch_config.voltage, ch_config.current)
+                    self._ps_controller.set_on_off(IO.ON, channel_enum)
+
+            self._running = True
+            self._timer.start(100) # 100 ms interval
+            print("Poller started and power supply configured.")
+        except Exception as e:
+            self.error.emit(f"Failed to start poller: {e}")
+            self.stop()
+
+    def stop(self):
+        self._running = False
+        self._timer.stop()
+        if self._ps_controller:
+            try:
+                # Turn off all channels when polling stops
+                self._ps_controller.set_on_off(IO.OFF, PSChannel.ALL)
+                if self._ps_controller.instrument and self._ps_controller.instrument.session is not None:
+                    self._ps_controller.close()
+            except Exception as e:
+                print(f"Error while closing power supply in poller: {e}")
+        self._ps_controller = None
+        self.finished.emit()
+        print("Poller stopped.")
+
+    def poll(self):
+        if not self._running or not self._ps_controller:
+            return
+
+        try:
+            data = {
+                'voltage': [],
+                'current': [],
+                'power': []
+            }
+            channels = [PSChannel.CH1, PSChannel.CH2, PSChannel.CH3]
+            for ch in channels:
+                v_str = self._ps_controller.measure_voltage(ch).strip()
+                c_str = self._ps_controller.measure_current(ch).strip()
+                p_str = self._ps_controller.measure_power(ch).strip()
+                
+                data['voltage'].append(float(v_str) if v_str else 0.0)
+                data['current'].append(float(c_str) if c_str else 0.0)
+                data['power'].append(float(p_str) if p_str else 0.0)
+            
+            self.polledData.emit(data)
+        except Exception as e:
+            self.error.emit(f"Polling failed: {e}")
+            self.stop()
 
 
 class ProjectModel(QAbstractListModel):
@@ -138,9 +215,12 @@ class ProjectProxy(QObject):
 class ConfigViewModel(QObject):
     currentProjectChanged = Signal()
     powerSupplyTestFailed = Signal(str)
+    powerSupplyDataUpdated = Signal(list, list, list) # voltage, current, power
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._poller_thread = None
+        self._poller = None
 
 
         db_path = 'project.db'
@@ -296,36 +376,38 @@ class ConfigViewModel(QObject):
             self.powerSupplyTestFailed.emit(msg)
             return
 
-        ps_controller = Power_supply_it6302(ps_config.resource_name, ps_config.baud_rate)
+        if testing:
+            # Stop any existing poller first
+            if self._poller_thread and self._poller_thread.isRunning():
+                self._poller.stop()
+                self._poller_thread.quit()
+                self._poller_thread.wait()
 
-        try:
-            ps_controller.open()
-            print(f"Connected to power supply: {ps_controller.get_idn().strip()}")
+            # Setup and start the poller thread
+            self._poller_thread = QThread()
+            self._poller = PowerSupplyPoller(ps_config.resource_name, ps_config.baud_rate, self._current_project)
+            self._poller.moveToThread(self._poller_thread)
 
-            if testing:
-                print("Starting power supply test...")
-                # Configure and enable channels
-                for i, ch_config in enumerate(ps_config.channels):
-                    channel_enum = PSChannel[f"CH{i+1}"]
-                    if ch_config.voltage is not None and ch_config.current is not None:
-                        print(f"Setting Channel {i+1}: V={ch_config.voltage}, C={ch_config.current}")
-                        ps_controller.set_voltage_current(channel_enum, ch_config.voltage, ch_config.current)
-                        ps_controller.set_on_off(IO.ON, channel_enum)
-                print("Test started.")
-            else:
-                print("Stopping power supply test...")
-                # Turn off all channels
-                ps_controller.set_on_off(IO.OFF, PSChannel.ALL)
-                print("Test stopped. All channels off.")
+            self._poller.polledData.connect(self._on_power_supply_data_updated)
+            self._poller.error.connect(self.powerSupplyTestFailed)
+            self._poller_thread.started.connect(self._poller.start)
+            self._poller.finished.connect(self._poller_thread.quit)
+            
+            self._poller_thread.start()
+        else:
+            if self._poller:
+                self._poller.stop() # This will turn off channels and close connection
+            if self._poller_thread:
+                self._poller_thread.quit()
+                self._poller_thread.wait()
+            self._poller_thread = None
+            self._poller = None
+            print("Test stopped and poller cleaned up.")
 
-        except Exception as e:
-            error_message = f"电源测试出错: {e}"
-            print(error_message)
-            self.powerSupplyTestFailed.emit(error_message)
-        finally:
-            if ps_controller.instrument and ps_controller.instrument.session is not None:
-                ps_controller.close()
-                print("Power supply connection closed.")
+    @Slot(dict)
+    def _on_power_supply_data_updated(self, data):
+        logger.info(f"on power supply data updated {data['voltage']}, {data['current']}, {data['power']}")
+        self.powerSupplyDataUpdated.emit(data['voltage'], data['current'], data['power'])
 
     @Slot()
     def resetPowerSupplySettings(self):

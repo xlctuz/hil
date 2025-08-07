@@ -14,6 +14,9 @@ GroupBox {
     property string voltagePlaceholder: "value"
     property alias voltageField: textField1
     property alias currentField: textField2
+    property alias voltageSeries: voltageSeries
+    property alias currentSeries: currentSeries
+    property alias powerSeries: powerSeries
 
     GridLayout {
         id: gridLayout
@@ -86,6 +89,7 @@ GroupBox {
             Layout.fillWidth: true
             backgroundColor: "#f4f4f4"
             LineSeries {
+                id: voltageSeries
                 name: "LineSeries"
                 XYPoint {
                     x: 0
@@ -130,6 +134,7 @@ GroupBox {
             Layout.fillWidth: true
             backgroundColor: "#f4f4f4"
             LineSeries {
+                id: currentSeries
                 name: "LineSeries"
                 XYPoint {
                     x: 0
@@ -174,6 +179,7 @@ GroupBox {
             Layout.fillWidth: true
             backgroundColor: "#f4f4f4"
             LineSeries {
+                id: powerSeries
                 name: "LineSeries"
                 XYPoint {
                     x: 0
