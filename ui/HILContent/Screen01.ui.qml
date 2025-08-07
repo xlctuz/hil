@@ -501,7 +501,7 @@ Rectangle {
 
 /*##^##
 Designer {
-    D{i:0;formeditorColor:"#00000c"}D{i:18;invisible:true}
+    D{i:0;formeditorColor:"#00000c"}D{i:17;invisible:true}
 }
 ##^##*/
 
