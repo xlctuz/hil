@@ -1,4 +1,4 @@
-from visa_resource_manager import rm
+from .visa_resource_manager import rm
 import pyvisa
 from contextlib import contextmanager
 from enum import StrEnum, auto

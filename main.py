@@ -17,6 +17,7 @@ from sqlalchemy.orm import sessionmaker
 from core.channel import Base, Channel
 from core.project import Project
 from core.power_supply_it6302 import Power_supply_it6302
+from view.config_view import ConfigViewModel
 
 class App(QObject):
     def __init__(self, parent=None):
@@ -33,56 +34,76 @@ if __name__ == "__main__":
 
     logger.info("main")
 
-    # --- Database Example Start ---
-    # Setup database
+    # --- Database Setup and Seeding ---
     engine = create_engine('sqlite:///project.db')
+    Base.metadata.drop_all(engine) # For clean test runs
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    # Create a new project and power supply configuration
-    logger.info("Creating and saving a new project with power supply configuration...")
-    new_project = Project()
-    power_supply = Power_supply_it6302(resource_name="ASRL4::INSTR", baud_rate=9600)
-    power_supply.channels[0].voltage = 5.0
-    power_supply.channels[0].current = 1.0
-    power_supply.channels[1].voltage = 12.0
-    power_supply.channels[1].current = 0.5
-    power_supply.channels[2].voltage = 3.3
-    power_supply.channels[2].current = 0.2
-
-    # Associate power supply with the project
-    new_project.power_supply = power_supply
-
-    session.add(new_project)
-    session.commit()
-    project_id = new_project.id
-    logger.info(f"Project with ID {project_id} saved.")
-
-    # Query the project and its power supply configuration
-    logger.info(f"Querying for project ID {project_id} from database...")
-    queried_project = session.query(Project).filter_by(id=project_id).one_or_none()
-
-    if queried_project:
-        logger.info(f"Found project ID: {queried_project.id}")
-        if queried_project.power_supply:
-            ps = queried_project.power_supply
-            logger.info(f"  Power Supply: {ps.resource_name} @ {ps.baud_rate}bps")
-            for ch in ps.channels:
-                logger.info(f"    Channel {ch.index}: Voltage={ch.voltage}V, Current={ch.current}A")
+    # Create channels if they don't exist
+    if session.query(Channel).count() == 0:
+        logger.info("Creating channels...")
+        channels = [
+            Channel(index=0, name="通道1"),
+            Channel(index=1, name="通道2"),
+            Channel(index=2, name="通道3")
+        ]
+        session.add_all(channels)
+        session.commit()
     else:
-        logger.warning("Could not find the project in the database.")
+        channels = session.query(Channel).order_by(Channel.id).all()
+
+    # Create a sample project for each channel
+    if session.query(Project).count() == 0:
+        logger.info("Creating and saving new projects...")
+        
+        # Project 1 for Channel 1
+        project1 = Project(name="项目A")
+        ps1 = Power_supply_it6302(resource_name="ASRL1::INSTR", baud_rate=9600)
+        ps1.channels[0].voltage = 5.0
+        ps1.channels[0].current = 1.0
+        ps1.channels[1].voltage = 15.0
+        ps1.channels[1].current = 1.1
+        ps1.channels[2].voltage = 3.3
+        ps1.channels[2].current = 1.2
+        project1.power_supply = ps1
+        project1.channel = channels[0]
+        session.add(project1)
+
+        # Project 2 for Channel 1
+        project2 = Project(name="项目B")
+        project2.channel = channels[0]
+        session.add(project2)
+
+        # Project 3 for Channel 2
+        project3 = Project(name="项目C")
+        ps3 = Power_supply_it6302(resource_name="ASRL2::INSTR", baud_rate=115200)
+        ps3.channels[0].voltage = 2.0
+        ps3.channels[0].current = 2.0
+        ps3.channels[1].voltage = 12.0
+        ps3.channels[1].current = 2.0
+        ps3.channels[2].voltage = 4.3
+        ps3.channels[2].current = 2.2
+        project3.power_supply = ps3
+        project3.channel = channels[1]
+        session.add(project3)
+
+        session.commit()
+        logger.info("Sample projects created.")
 
     session.close()
-    # --- Database Example End ---
+    # --- Database End ---
 
     backend = App()
+    config_view_model = ConfigViewModel()
 
     engine = QQmlApplicationEngine()
     # engine.addImportPath(os.path.join(os.path.dirname(__file__), "ui", "styles"))
     engine.addImportPath(os.path.join(os.path.dirname(__file__), "ui/"))
 
     engine.rootContext().setContextProperty("backend", backend)
+    engine.rootContext().setContextProperty("configViewModel", config_view_model)
 
 
     engine.load(os.path.join(os.path.dirname(__file__), "ui/HILContent/App.qml"))

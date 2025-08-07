@@ -12,6 +12,8 @@ GroupBox {
     title: qsTr("通道1")
 
     property string voltagePlaceholder: "value"
+    property alias voltageField: textField1
+    property alias currentField: textField2
 
     GridLayout {
         id: gridLayout

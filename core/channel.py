@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -10,9 +10,11 @@ class Channel(Base):
 
     id = Column(Integer, primary_key=True)
     index = Column(Integer, nullable=False)
+    name = Column(String)
 
     # one-to-many: a channel has many projects
     projects = relationship("Project", back_populates="channel")
 
-    def __init__(self, index):
+    def __init__(self, index, name=""):
         self.index = index
+        self.name = name

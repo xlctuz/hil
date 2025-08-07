@@ -253,6 +253,9 @@ Rectangle {
                 id: configView
                 visible: true
                 anchors.fill: parent
+                Component.onCompleted: {
+                    configViewModel.selectChannel(0)
+                }
                 RowLayout {
                     id: rowLayout2
                     width: 100
@@ -271,6 +274,7 @@ Rectangle {
                         spacing: 10
                         font.pointSize: 16
                         font.bold: true
+                        onCurrentIndexChanged: configViewModel.selectChannel(currentIndex)
                         TabButton {
                             id: tabButton5
                             text: qsTr("通道1")
@@ -333,7 +337,7 @@ Rectangle {
                                     anchors.top: parent.top
                                     anchors.leftMargin: 0
                                     anchors.topMargin: 0
-                                    model: ProjModel
+                                    model: configViewModel.projectsModel
                                     footer: Row {
                                         id: row
                                         width: 200
@@ -374,6 +378,8 @@ Rectangle {
                                         id: textField
                                         Layout.preferredWidth: 200
                                         placeholderText: qsTr("项目名称")
+                                        text: configViewModel.currentProject.name
+                                        readOnly: true
                                     }
 
                                     Item {

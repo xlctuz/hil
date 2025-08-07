@@ -18,10 +18,9 @@ ListView {
         }
 
         Connections {
-            target: btnProject // target 設為 Python 物件
+            target: btnProject
             onClicked: {
-                console.log(`select button ${index}`)
-                app.selectButton(listViewProj.model, index)
+                configViewModel.selectProject(index)
             }
         }
     }

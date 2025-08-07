@@ -1,0 +1,173 @@
+import sys
+import os
+from PySide6.QtCore import QObject, Property, Slot, QAbstractListModel, QModelIndex, Qt, Signal
+
+# Add core to path to import models
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, joinedload
+
+from core.channel import Base, Channel
+from core.project import Project
+from core.power_supply_it6302 import Power_supply_it6302, Power_supply_it6302_channel
+
+class ProjectModel(QAbstractListModel):
+    NameRole = Qt.UserRole + 1
+    CheckedRole = Qt.UserRole + 2
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._projects = []
+
+    def data(self, index, role=Qt.DisplayRole):
+        if not index.isValid() or not (0 <= index.row() < len(self._projects)):
+            return None
+        project = self._projects[index.row()]
+        if role == self.NameRole:
+            return project.name
+        if role == self.CheckedRole:
+            return getattr(project, 'checked', False)
+        return None
+
+    def rowCount(self, parent=QModelIndex()):
+        return len(self._projects)
+
+    def roleNames(self):
+        return {
+            self.NameRole: b'name',
+            self.CheckedRole: b'checked'
+        }
+
+    def set_projects(self, projects):
+        self.beginResetModel()
+        self._projects = projects
+        # Add checked attribute for UI state
+        for p in self._projects:
+            p.checked = False
+        self.endResetModel()
+
+    def get_project(self, row):
+        if 0 <= row < len(self._projects):
+            return self._projects[row]
+        return None
+    
+    def set_checked(self, row, checked=True):
+        if 0 <= row < len(self._projects):
+            # Uncheck others
+            for i, p in enumerate(self._projects):
+                if i != row and getattr(p, 'checked', False):
+                    p.checked = False
+                    self.dataChanged.emit(self.index(i, 0), self.index(i, 0), [self.CheckedRole])
+            
+            # Check selected
+            project = self._projects[row]
+            project.checked = checked
+            self.dataChanged.emit(self.index(row, 0), self.index(row, 0), [self.CheckedRole])
+
+
+class PowerSupplyChannelProxy(QObject):
+    def __init__(self, channel_data, parent=None):
+        super().__init__(parent)
+        self._channel_data = channel_data
+
+    @Property('QVariant', constant=True)
+    def voltage(self):
+        return self._channel_data.voltage if self._channel_data and self._channel_data.voltage is not None else None
+
+    @Property('QVariant', constant=True)
+    def current(self):
+        return self._channel_data.current if self._channel_data and self._channel_data.current is not None else None
+
+class PowerSupplyProxy(QObject):
+    def __init__(self, power_supply_data, parent=None):
+        super().__init__(parent)
+        self._power_supply_data = power_supply_data
+        self._channels = []
+        if self._power_supply_data:
+            # sort channels by index
+            sorted_channels = sorted(self._power_supply_data.channels, key=lambda c: c.index)
+            for ch_data in sorted_channels:
+                self._channels.append(PowerSupplyChannelProxy(ch_data, self))
+        # ensure 3 channels exist for QML binding
+        while len(self._channels) < 3:
+            self._channels.append(PowerSupplyChannelProxy(None, self))
+
+    @Property(QObject, constant=True)
+    def ch1(self):
+        return self._channels[0]
+
+    @Property(QObject, constant=True)
+    def ch2(self):
+        return self._channels[1]
+
+    @Property(QObject, constant=True)
+    def ch3(self):
+        return self._channels[2]
+
+
+class ProjectProxy(QObject):
+    def __init__(self, project_data, parent=None):
+        super().__init__(parent)
+        self._project_data = project_data
+        self._power_supply = PowerSupplyProxy(project_data.power_supply if project_data else None, self)
+
+    @Property('QVariant', constant=True)
+    def name(self):
+        return self._project_data.name if self._project_data else None
+
+    @Property(QObject, constant=True)
+    def powerSupply(self):
+        return self._power_supply
+
+
+class ConfigViewModel(QObject):
+    currentProjectChanged = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        
+        db_path = 'project.db'
+        self._engine = create_engine(f'sqlite:///{db_path}')
+        Base.metadata.create_all(self._engine)
+        self._Session = sessionmaker(bind=self._engine)
+        
+        self._project_model = ProjectModel()
+        self._current_project = None
+        self._current_project_proxy = ProjectProxy(None)
+
+    @Property(QObject, constant=True)
+    def projectsModel(self):
+        return self._project_model
+
+    @Property(QObject, notify=currentProjectChanged)
+    def currentProject(self):
+        return self._current_project_proxy
+
+    @Slot(int)
+    def selectChannel(self, index):
+        print(f"Channel {index + 1} selected")
+        session = self._Session()
+        try:
+            # Assuming channel IDs are 1, 2, 3...
+            channel_id = index + 1
+            projects = session.query(Project).filter(Project.channel_id == channel_id).options(joinedload(Project.power_supply).joinedload(Power_supply_it6302.channels)).all()
+            self._project_model.set_projects(projects)
+        finally:
+            session.close()
+        
+        self._current_project = None
+        self._current_project_proxy = ProjectProxy(None)
+        self.currentProjectChanged.emit()
+        if self._project_model.rowCount() > 0:
+            self.selectProject(0)
+
+    @Slot(int)
+    def selectProject(self, index):
+        project = self._project_model.get_project(index)
+        if project:
+            print(f"Project {project.id} selected")
+            self._current_project = project
+            self._current_project_proxy = ProjectProxy(project)
+            self._project_model.set_checked(index)
+            self.currentProjectChanged.emit()
