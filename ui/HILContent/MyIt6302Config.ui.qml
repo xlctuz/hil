@@ -64,6 +64,19 @@ Pane {
                     voltagePlaceholder: qsTr("电压(0-30Volt)")
                     voltageField.text: powerSupply?.ch1?.voltage || ""
                     currentField.text: powerSupply?.ch1?.current || ""
+
+                    Connections {
+                        target: groupBox.voltageField
+                        function onEditingFinished() {
+                            configViewModel.setPowerSupplyVoltage(0, parseFloat(target.text))
+                        }
+                    }
+                    Connections {
+                        target: groupBox.currentField
+                        function onEditingFinished() {
+                            configViewModel.setPowerSupplyCurrent(0, parseFloat(target.text))
+                        }
+                    }
                 }
 
                 PowerSupplyChannel {
@@ -74,6 +87,19 @@ Pane {
                     voltagePlaceholder: qsTr("电压(0-30Volt)")
                     voltageField.text: powerSupply?.ch2?.voltage || ""
                     currentField.text: powerSupply?.ch2?.current || ""
+
+                    Connections {
+                        target: groupBox1.voltageField
+                        function onEditingFinished() {
+                            configViewModel.setPowerSupplyVoltage(1, parseFloat(target.text))
+                        }
+                    }
+                    Connections {
+                        target: groupBox1.currentField
+                        function onEditingFinished() {
+                            configViewModel.setPowerSupplyCurrent(1, parseFloat(target.text))
+                        }
+                    }
                 }
 
                 PowerSupplyChannel {
@@ -84,6 +110,19 @@ Pane {
                     voltagePlaceholder: qsTr("电压(0-5Volt)")
                     voltageField.text: powerSupply?.ch3?.voltage || ""
                     currentField.text: powerSupply?.ch3?.current || ""
+
+                    Connections {
+                        target: groupBox2.voltageField
+                        function onEditingFinished() {
+                            configViewModel.setPowerSupplyVoltage(2, parseFloat(target.text))
+                        }
+                    }
+                    Connections {
+                        target: groupBox2.currentField
+                        function onEditingFinished() {
+                            configViewModel.setPowerSupplyCurrent(2, parseFloat(target.text))
+                        }
+                    }
                 }
             }
         }

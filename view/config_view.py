@@ -189,6 +189,50 @@ class ConfigViewModel(QObject):
         # Refresh the project list
         self.selectChannel(self._current_channel_index)
 
+    @Slot(int, float)
+    def setPowerSupplyVoltage(self, channel_index, voltage):
+        if not self._current_project or not self._current_project.power_supply:
+            return
+        
+        session = self._Session()
+        try:
+            power_supply = session.merge(self._current_project.power_supply)
+            channel = next((ch for ch in power_supply.channels if ch.index == channel_index), None)
+            if channel:
+                channel.voltage = voltage
+                session.commit()
+                print(f"Updated voltage for project {self._current_project.id}, channel {channel_index} to {voltage}")
+                # Refresh current project data to update UI
+                self._current_project.power_supply.channels[channel_index].voltage = voltage
+                self.currentProjectChanged.emit()
+        except Exception as e:
+            print(f"Error updating voltage: {e}")
+            session.rollback()
+        finally:
+            session.close()
+
+    @Slot(int, float)
+    def setPowerSupplyCurrent(self, channel_index, current):
+        if not self._current_project or not self._current_project.power_supply:
+            return
+
+        session = self._Session()
+        try:
+            power_supply = session.merge(self._current_project.power_supply)
+            channel = next((ch for ch in power_supply.channels if ch.index == channel_index), None)
+            if channel:
+                channel.current = current
+                session.commit()
+                print(f"Updated current for project {self._current_project.id}, channel {channel_index} to {current}")
+                # Refresh current project data to update UI
+                self._current_project.power_supply.channels[channel_index].current = current
+                self.currentProjectChanged.emit()
+        except Exception as e:
+            print(f"Error updating current: {e}")
+            session.rollback()
+        finally:
+            session.close()
+
     @Slot()
     def deleteCurrentProject(self):
         if not self._current_project:

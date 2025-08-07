@@ -53,6 +53,7 @@ GroupBox {
             Layout.fillHeight: false
             Layout.fillWidth: false
             placeholderText: voltagePlaceholder
+            validator: DoubleValidator {}
         }
         TextField {
             id: textField2
@@ -61,6 +62,7 @@ GroupBox {
             Layout.fillHeight: false
             Layout.fillWidth: false
             placeholderText: qsTr("电流值(0-3A)")
+            validator: DoubleValidator {}
         }
 
         Label {
