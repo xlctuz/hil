@@ -13,5 +13,7 @@ class Project(Base):
     channel_id = Column(Integer, ForeignKey('channels.id'))
     channel = relationship("Channel", back_populates="projects")
 
+    power_supply = relationship("Power_supply_it6302", uselist=False, back_populates="project")
+
     def __init__(self):
         pass

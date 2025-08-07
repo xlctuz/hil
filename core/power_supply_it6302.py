@@ -4,6 +4,10 @@ from contextlib import contextmanager
 from enum import StrEnum, auto
 import time
 from PySide6.QtCore import QObject
+from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy.orm import relationship
+
+from .channel import Base
 
 class Power_supply_error(Exception):
     pass
@@ -143,23 +147,46 @@ class Power_supply_command():
 
 
 # TODO 支持sqlAlchemy ORM持久化
-class Power_supply_it6302_channel(QObject):
-    def __init__(self, index, parent=None):
-        super().__init__(parent)
-        self._index = index;
+class Power_supply_it6302_channel(Base, QObject):
+    __tablename__ = 'power_supply_it6302_channels'
 
+    id = Column(Integer, primary_key=True)
+    index = Column(Integer)
+    voltage = Column(Float)
+    current = Column(Float)
+
+    power_supply_id = Column(Integer, ForeignKey('power_supply_it6302.id'))
+    power_supply = relationship("Power_supply_it6302", back_populates="channels")
+
+    def __init__(self, index, voltage=None, current=None, parent=None):
+        QObject.__init__(self, parent)
+        self.index = index
+        self.voltage = voltage
+        self.current = current
 
 
 # TODO 支持sqlAlchemy ORM持久化
-class Power_supply_it6302(QObject):
-    def __init__(self, resource_name : str, baud_rate: int):
-        super().__init__(parent)
+class Power_supply_it6302(Base, QObject):
+    __tablename__ = 'power_supply_it6302'
+
+    id = Column(Integer, primary_key=True)
+    resource_name = Column(String)
+    baud_rate = Column(Integer)
+
+    project_id = Column(Integer, ForeignKey('projects.id'))
+    project = relationship("Project", back_populates="power_supply", uselist=False)
+
+    channels = relationship("Power_supply_it6302_channel", back_populates="power_supply", cascade="all, delete-orphan")
+
+    def __init__(self, resource_name : str, baud_rate: int, parent=None):
+        QObject.__init__(self, parent)
         self.resource_name = resource_name
         self.baud_rate = baud_rate
         self.instrument = None
-        self._channels = [Power_supply_it6302_channel(0),
-                          Power_supply_it6302_channel(1),
-                          Power_supply_it6302_channel(2)]
+        if not self.channels:
+            self.channels = [Power_supply_it6302_channel(index=0),
+                             Power_supply_it6302_channel(index=1),
+                             Power_supply_it6302_channel(index=2)]
 
 
     def open(self):
