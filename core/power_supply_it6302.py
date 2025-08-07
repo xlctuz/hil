@@ -157,7 +157,6 @@ class Power_supply_it6302_channel(Base):
     power_supply = relationship("Power_supply_it6302", back_populates="channels")
 
     def __init__(self, index, voltage=None, current=None, parent=None):
-        QObject.__init__(self, parent)
         self.index = index
         self.voltage = voltage
         self.current = current
@@ -176,7 +175,6 @@ class Power_supply_it6302(Base):
     channels = relationship("Power_supply_it6302_channel", back_populates="power_supply", cascade="all, delete-orphan")
 
     def __init__(self, resource_name : str, baud_rate: int, parent=None):
-        QObject.__init__(self, parent)
         self.resource_name = resource_name
         self.baud_rate = baud_rate
         self.instrument = None
