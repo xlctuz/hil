@@ -18,6 +18,7 @@ from core.channel import Base, Channel
 from core.project import Project
 from core.power_supply_it6302 import Power_supply_it6302
 from view.config_view import ConfigViewModel
+from core.db import engine
 
 class App(QObject):
     def __init__(self, parent=None):
@@ -34,8 +35,6 @@ if __name__ == "__main__":
 
     logger.info("main")
 
-    # --- Database Setup and Seeding ---
-    engine = create_engine('sqlite:///project.db')
     # Base.metadata.drop_all(engine) # For clean test runs
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
