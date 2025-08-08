@@ -57,6 +57,7 @@ Pane {
                 spacing: 20
                 GroupBox {
                     id: doConfig
+                    height: 400
                     Layout.alignment: Qt.AlignLeft | Qt.AlignTop
                     Layout.fillHeight: false
                     Layout.fillWidth: true

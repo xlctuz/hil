@@ -1,8 +1,7 @@
 import QtCharts
-import QtQuick 6.7
-import QtQuick.Controls 6.7
+import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
-import QtCharts 2.9
 
 GroupBox {
     id: groupBox
@@ -12,6 +11,14 @@ GroupBox {
     title: qsTr("通道1")
 
     property string voltagePlaceholder: "value"
+    property alias voltageField: textField1
+    property alias currentField: textField2
+    property alias voltageSeries: voltageChartView.series
+    property alias currentSeries: currentChartView.series
+    property alias powerSeries: powerChartView.series
+    property alias voltageLabel: voltageLabel
+    property alias currentLabel: currentLabel
+    property alias powerLabel: powerLabel
 
     GridLayout {
         id: gridLayout
@@ -51,6 +58,7 @@ GroupBox {
             Layout.fillHeight: false
             Layout.fillWidth: false
             placeholderText: voltagePlaceholder
+            validator: DoubleValidator {}
         }
         TextField {
             id: textField2
@@ -59,138 +67,46 @@ GroupBox {
             Layout.fillHeight: false
             Layout.fillWidth: false
             placeholderText: qsTr("电流值(0-3A)")
+            validator: DoubleValidator {}
         }
 
         Label {
-            id: label
+            id: voltageLabel
             width: 80
             text: qsTr("电压: 233.33")
             Layout.rowSpan: 2
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
         }
 
-        ChartView {
-            id: line
-            width: 300
-            height: 200
-            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-            Layout.fillHeight: false
-            Layout.rowSpan: 2
-            titleColor: "#000000"
-            plotAreaColor: "#f4f4f4"
-            dropShadowEnabled: true
-            Layout.fillWidth: true
-            backgroundColor: "#f4f4f4"
-            LineSeries {
-                name: "LineSeries"
-                XYPoint {
-                    x: 0
-                    y: 2
-                }
-
-                XYPoint {
-                    x: 1
-                    y: 1.2
-                }
-
-                XYPoint {
-                    x: 2
-                    y: 3.3
-                }
-
-                XYPoint {
-                    x: 5
-                    y: 2.1
-                }
-            }
+        MyChartView {
+            id: voltageChartView
+            lineColor: "#e51b20"
         }
 
         Label {
-            id: label1
+            id: currentLabel
             width: 80
             text: qsTr("电流: 222.11")
             Layout.rowSpan: 2
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
         }
 
-        ChartView {
-            id: line1
-            width: 300
-            height: 200
-            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-            Layout.fillHeight: false
-            Layout.rowSpan: 2
-            titleColor: "#000000"
-            plotAreaColor: "#f4f4f4"
-            dropShadowEnabled: true
-            Layout.fillWidth: true
-            backgroundColor: "#f4f4f4"
-            LineSeries {
-                name: "LineSeries"
-                XYPoint {
-                    x: 0
-                    y: 2
-                }
-
-                XYPoint {
-                    x: 1
-                    y: 1.2
-                }
-
-                XYPoint {
-                    x: 2
-                    y: 3.3
-                }
-
-                XYPoint {
-                    x: 5
-                    y: 2.1
-                }
-            }
+        MyChartView {
+            id: currentChartView
+            lineColor: "#42a4de"
         }
 
         Label {
-            id: label2
+            id: powerLabel
             width: 80
             text: qsTr("功率: 111.11")
             Layout.rowSpan: 2
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
         }
 
-        ChartView {
-            id: line2
-            width: 300
-            height: 200
-            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-            Layout.fillHeight: false
-            Layout.rowSpan: 2
-            titleColor: "#000000"
-            plotAreaColor: "#f4f4f4"
-            dropShadowEnabled: true
-            Layout.fillWidth: true
-            backgroundColor: "#f4f4f4"
-            LineSeries {
-                name: "LineSeries"
-                XYPoint {
-                    x: 0
-                    y: 2
-                }
-
-                XYPoint {
-                    x: 1
-                    y: 1.2
-                }
-
-                XYPoint {
-                    x: 2
-                    y: 3.3
-                }
-
-                XYPoint {
-                    x: 5
-                    y: 2.1
-                }
-            }
+        MyChartView {
+            id: powerChartView
+            lineColor: "#fcc016"
         }
     }
 }
