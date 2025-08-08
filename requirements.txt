@@ -1,2 +1,6 @@
 setuptools==78.1.1
 wheel==0.45.1
+pyside6=6.9.1
+pyside6-ds=4.6
+pyvisa=1.15.0
+sqlalchemy=2.0.42
