@@ -66,6 +66,16 @@ class Status(enum.Enum):
     NA = "na"
 
 
+class Pcie_1762h_di_channel(Base):
+    __tablename__ = 'pcie_1762h_di_channel'
+    id = Column(Integer, primary_key=True)
+    index = Column(Integer)
+    name = Column(String)
+    status = Column(Enum(Status), default=Status.NA)
+    
+    pcie_1762h_id = Column(Integer, ForeignKey('pcie_1762h.id'))
+    pcie_1762h = relationship("Pcie_1762h", back_populates="di_channels")
+
 class Pcie_1762h_do_channel(Base):
     __tablename__ = 'pcie_1762h_do_channel'
     id = Column(Integer, primary_key=True)
@@ -74,8 +84,7 @@ class Pcie_1762h_do_channel(Base):
     status = Column(Enum(Status), default=Status.NA)
 
     pcie_1762h_id = Column(Integer, ForeignKey('pcie_1762h.id'))
-    pcie_1762h = relationship("pcie_1762h", back_populates="do_channels")
-
+    pcie_1762h = relationship("Pcie_1762h", back_populates="do_channels")
 
 class Pcie_1762h(Base):
     __tablename__ = 'pcie_1762h'
@@ -83,10 +92,13 @@ class Pcie_1762h(Base):
 
     project = relationship("Project", back_populates="pcie_1762h", uselist=False)
     do_channels = relationship("Pcie_1762h_do_channel", back_populates="pcie_1762h", cascade="all, delete-orphan")
+    di_channels = relationship("Pcie_1762h_di_channel", back_populates="pcie_1762h", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         if not self.do_channels:
             self.do_channels = [Pcie_1762h_do_channel(index=i) for i in range(16)]
+        if not self.di_channels:
+            self.di_channels = [Pcie_1762h_di_channel(index=i) for i in range(16)]
         self.instantDoCtrl = InstantDoCtrl(deviceDescription)
         self.instantDoCtrl.loadProfile = profilePath
         super().__init__(**kwargs)

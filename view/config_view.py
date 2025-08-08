@@ -13,6 +13,7 @@ from sqlalchemy.orm import sessionmaker, joinedload
 from core.channel import Base, Channel
 from core.project import Project
 from core.power_supply_it6302 import Power_supply_it6302, Power_supply_it6302_channel, IO, Channel as PSChannel
+from core.pcie_1762h_controller import Pcie_1762h, Pcie_1762h_do_channel, Pcie_1762h_di_channel, Status
 from core.visa_resource_manager import rm
 from worker.power_supply_poller import PowerSupplyPoller
 from core.db import engine
