@@ -72,7 +72,7 @@ if __name__ == "__main__":
         project1.power_supply = ps1
         
         # Add PCIe-1762H controller (通道初始化已在类内部实现)
-        pcie1 = Pcie_1762h(device_name="PCIe-1762H-1")
+        pcie1 = Pcie_1762h()
         project1.pcie_1762h = pcie1
         
         project1.channel = channels[0]
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         project2.power_supply = ps2
         
         # Add PCIe-1762H controller (通道初始化已在类内部实现)
-        pcie2 = Pcie_1762h(device_name="PCIe-1762H-2")
+        pcie2 = Pcie_1762h()
         project2.pcie_1762h = pcie2
         session.add(project2)
 
@@ -108,7 +108,7 @@ if __name__ == "__main__":
         project3.power_supply = ps3
         
         # Add PCIe-1762H controller (通道初始化已在类内部实现)
-        pcie3 = Pcie_1762h(device_name="PCIe-1762H-3")
+        pcie3 = Pcie_1762h()
         project3.pcie_1762h = pcie3
         
         project3.channel = channels[1]
