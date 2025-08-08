@@ -8,6 +8,8 @@ Pane {
     height: 800
     z: 0
 
+    property var pcie1762h: null
+
     ColumnLayout {
         id: columnLayout4
         anchors.fill: parent
@@ -95,7 +97,7 @@ Pane {
                                             id: textField
                                             Layout.fillWidth: true
                                             placeholderText: qsTr("通道名称")
-                                            text: currentProject.pcie1762h.doChannels[15 - index].name
+                                            text: pcie1762h?.doChannels?.[15 - index]?.name || ""
                                             onEditingFinished: configViewModel.setDoChannelName(15 - index, text)
                                         }
                                     }
@@ -110,7 +112,7 @@ Pane {
                                             id: radioButton
                                             text: qsTr("高")
                                             display: AbstractButton.TextOnly
-                                            checked: currentProject.pcie1762h.doChannels[15 - index].status === "high"
+                                            checked: pcie1762h?.doChannels?.[15 - index]?.status === "high"
                                             onCheckedChanged: if (checked) configViewModel.setDoChannelStatus(15 - index, "high")
                                         }
 
@@ -118,7 +120,7 @@ Pane {
                                             id: radioButton1
                                             text: qsTr("低")
                                             display: AbstractButton.TextUnderIcon
-                                            checked: currentProject.pcie1762h.doChannels[15 - index].status === "low"
+                                            checked: pcie1762h?.doChannels?.[15 - index]?.status === "low"
                                             onCheckedChanged: if (checked) configViewModel.setDoChannelStatus(15 - index, "low")
                                         }
 
@@ -126,7 +128,7 @@ Pane {
                                             id: radioButton2
                                             text: qsTr("X")
                                             display: AbstractButton.TextUnderIcon
-                                            checked: currentProject.pcie1762h.doChannels[15 - index].status === "na"
+                                            checked: pcie1762h?.doChannels?.[15 - index]?.status === "na"
                                             onCheckedChanged: if (checked) configViewModel.setDoChannelStatus(15 - index, "na")
                                         }
                                     }

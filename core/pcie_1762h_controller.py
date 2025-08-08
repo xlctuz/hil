@@ -43,10 +43,6 @@ $NoKeywords:  $
 import time, sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
-from Automation.BDaq import *
-from Automation.BDaq.InstantDiCtrl import InstantDiCtrl
-from Automation.BDaq.InstantDoCtrl import InstantDoCtrl
-from Automation.BDaq.BDaqApi import AdxEnumToString, BioFailed
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from .channel import Base
@@ -89,6 +85,7 @@ class Pcie_1762h(Base):
     __tablename__ = 'pcie_1762h'
     id = Column(Integer, primary_key=True)
 
+    project_id = Column(Integer, ForeignKey('projects.id'))
     project = relationship("Project", back_populates="pcie_1762h", uselist=False)
     do_channels = relationship("Pcie_1762h_do_channel", back_populates="pcie_1762h", cascade="all, delete-orphan")
     di_channels = relationship("Pcie_1762h_di_channel", back_populates="pcie_1762h", cascade="all, delete-orphan")
@@ -98,11 +95,11 @@ class Pcie_1762h(Base):
             self.do_channels = [Pcie_1762h_do_channel(index=i) for i in range(16)]
         if not self.di_channels:
             self.di_channels = [Pcie_1762h_di_channel(index=i) for i in range(16)]
-        self.instantDoCtrl = InstantDoCtrl(deviceDescription)
-        self.instantDoCtrl.loadProfile = profilePath
         super().__init__(**kwargs)
 
     def run_test(self):
+        from Automation.BDaq.InstantDoCtrl import InstantDoCtrl
+
         instantDoCtrl = None
         try:
             instantDoCtrl = InstantDoCtrl(deviceDescription)
@@ -123,6 +120,7 @@ class Pcie_1762h(Base):
                 instantDoCtrl.dispose()
 
     def get_di(self):
+        from Automation.BDaq.InstantDiCtrl import InstantDiCtrl
         instantDiCtrl = None
         try:
             instantDiCtrl = InstantDiCtrl(deviceDescription)

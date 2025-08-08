@@ -15,6 +15,7 @@ class Project(Base):
     channel = relationship("Channel", back_populates="projects")
 
     power_supply = relationship("Power_supply_it6302", uselist=False, back_populates="project")
+    pcie_1762h = relationship("Pcie_1762h", uselist=False, back_populates="project")
 
     def __init__(self, name=""):
         self.name = name

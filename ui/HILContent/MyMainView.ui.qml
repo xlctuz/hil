@@ -86,7 +86,7 @@ ColumnLayout {
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
                         anchors.topMargin: 0
-                        model: ProjModel
+                        model: []
                     }
                 }
             }

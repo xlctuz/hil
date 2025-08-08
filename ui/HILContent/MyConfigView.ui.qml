@@ -88,7 +88,7 @@ ColumnLayout {
                         anchors.top: parent.top
                         anchors.leftMargin: 0
                         anchors.topMargin: 0
-                        model: configViewModel.projectsModel
+                        model: configViewModel?.projectsModel
                     }
                 }
             }
@@ -117,7 +117,7 @@ ColumnLayout {
                             id: textFieldProjectName
                             Layout.preferredWidth: 200
                             placeholderText: qsTr("项目名称")
-                            text: configViewModel.currentProject.name || ""
+                            text: configViewModel?.currentProject.name || ""
                             readOnly: true
                         }
 
@@ -203,13 +203,14 @@ ColumnLayout {
                                 id: it6302Config
                                 height: swipeView.height
                                 width: swipeView.width
-                                powerSupply: configViewModel.currentProject ? configViewModel.currentProject.powerSupply : null
+                                powerSupply: configViewModel?.currentProject?.powerSupply
                             }
 
                             MyPcie1762hConfig {
                                 id: pcie1762hConfig
                                 height: swipeView.height
                                 width: swipeView.width
+                                pcie1762h: configViewModel?.currentProject?.pcie1762h
                             }
 
                             MyPci1720uConfig {

@@ -33,8 +33,8 @@ Pane {
 
                 ComboBox {
                     id: comboBoxResource
-                    model: configViewModel.availableVisaResources
-                    currentIndex: model.indexOf(powerSupply.resource_name)
+                    model: configViewModel?.availableVisaResources
+                    currentIndex: model?.indexOf(powerSupply?.resource_name) || -1
 
                 }
 
@@ -46,7 +46,7 @@ Pane {
                 ComboBox {
                     id: comboBoxBaud
                     model: [9600, 19200, 38400, 57600, 115200]
-                    currentIndex: model.indexOf(powerSupply.baud_rate)
+                    currentIndex: model.indexOf(powerSupply?.baud_rate)
                 }
 
                 Item {
