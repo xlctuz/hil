@@ -53,7 +53,9 @@ if __name__ == "__main__":
     else:
         channels = session.query(Channel).order_by(Channel.id).all()
 
+
     # Create a sample project for each channel
+    # TODO Add Pcie_1762h data
     if session.query(Project).count() == 0:
         logger.info("Creating and saving new projects...")
 
@@ -68,6 +70,7 @@ if __name__ == "__main__":
         ps1.channels[2].current = 1.2
         project1.power_supply = ps1
         project1.channel = channels[0]
+
         session.add(project1)
 
         # Project 2 for Channel 1
