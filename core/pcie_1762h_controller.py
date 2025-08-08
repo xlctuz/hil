@@ -71,8 +71,7 @@ class Pcie_1762h_di_channel(Base):
     id = Column(Integer, primary_key=True)
     index = Column(Integer)
     name = Column(String)
-    status = Column(Enum(Status), default=Status.NA)
-    
+
     pcie_1762h_id = Column(Integer, ForeignKey('pcie_1762h.id'))
     pcie_1762h = relationship("Pcie_1762h", back_populates="di_channels")
 
