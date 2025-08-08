@@ -2,6 +2,7 @@ import sys
 import os
 from PySide6.QtCore import QObject, Property, Slot, QAbstractListModel, QModelIndex, Qt, Signal, QThread, QTimer
 from common.logger import logger
+import traceback
 
 # Add core to path to import models
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
@@ -32,7 +33,7 @@ class PowerSupplyPoller(QObject):
 
     def start(self):
         try:
-            self._ps_controller = Power_supply_it6302(self._resource_name, self._baud_rate)
+            self._ps_controller = Power_supply_it6302(resource_name = self._resource_name, baud_rate = self._baud_rate)
             self._ps_controller.open()
 
             # Set initial configuration from the project
@@ -47,6 +48,7 @@ class PowerSupplyPoller(QObject):
             self._timer.start(100) # 100 ms interval
             print("Poller started and power supply configured.")
         except Exception as e:
+            traceback.print_exc()
             self.error.emit(f"Failed to start poller: {e}")
             self.stop()
 

@@ -1,19 +1,22 @@
 from .visa_resource_manager import rm
 import pyvisa
 from contextlib import contextmanager
-from enum import StrEnum, auto
+from enum import StrEnum
 import time
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
 
 from .channel import Base
 
+
 class Power_supply_error(Exception):
     pass
+
 
 class Parameter_error(Power_supply_error):
     def __init__(self, message):
         super().__init__(message)
+
 
 class IO(StrEnum):
     ON = "ON"
@@ -26,25 +29,31 @@ class Channel(StrEnum):
     CH3 = "CH3"
     ALL = "ALL"
 
+
 def _next(self):
     self._root.command += ";"
     return self
+
 
 def _root(self):
     self._root.command += ":"
     return self._root
 
+
 def _result(self):
     return self._root.command
 
+
 def _constructor(self, root):
     self._root = root
+
 
 def _add_common_method(cls):
     cls.next = _next
     cls.root = _root
     cls.result = _result
     cls.__init__ = _constructor
+
 
 class Power_supply_command():
     def __init__(self):
@@ -74,7 +83,7 @@ class Power_supply_command():
         self.command += "MEAS"
         return self._meas
 
-    def outp(self, io : IO):
+    def outp(self, io: IO):
         self.command += f"OUTP {io}"
         return self
 
@@ -86,18 +95,17 @@ class Power_supply_command():
             self._root.command += ":REM"
             return self
 
-
     class _Inst:
-        def nsel(self, channel : int):
+        def nsel(self, channel: int):
             if channel <= 0 or channel > 3:
-                raise Parameter_error(f"channel should be in range (0, 3]")
+                raise Parameter_error("channel should be in range (0, 3]")
 
             self._root.command += f":NSEL {channel}"
             return self
 
-        def sel(self, channel : Channel):
+        def sel(self, channel: Channel):
             if channel == Channel.ALL:
-                raise Parameter_error(f"channel can not be ALL")
+                raise Parameter_error("channel can not be ALL")
 
             self._root.command += f":SEL {channel}"
             return self
@@ -156,11 +164,6 @@ class Power_supply_it6302_channel(Base):
     power_supply_id = Column(Integer, ForeignKey('power_supply_it6302.id'))
     power_supply = relationship("Power_supply_it6302", back_populates="channels")
 
-    def __init__(self, index, voltage=None, current=None, parent=None):
-        self.index = index
-        self.voltage = voltage
-        self.current = current
-
 
 class Power_supply_it6302(Base):
     __tablename__ = 'power_supply_it6302'
@@ -174,14 +177,13 @@ class Power_supply_it6302(Base):
 
     channels = relationship("Power_supply_it6302_channel", back_populates="power_supply", cascade="all, delete-orphan")
 
-    def __init__(self, resource_name : str, baud_rate: int, parent=None):
-        self.resource_name = resource_name
-        self.baud_rate = baud_rate
+    def __init__(self, **kwargs):
         self.instrument = None
         if not self.channels:
             self.channels = [Power_supply_it6302_channel(index=0),
                              Power_supply_it6302_channel(index=1),
                              Power_supply_it6302_channel(index=2)]
+        super().__init__(**kwargs)
 
 
     def open(self):
@@ -197,7 +199,7 @@ class Power_supply_it6302(Base):
 
     def close(self):
         print(f"close power supply")
-        self.instrument.close();
+        self.instrument.close()
 
     def _write(self, cmd):
         self.instrument.write(cmd)
@@ -292,7 +294,7 @@ if __name__ == "__main__":
         print(f"通道1 电压: {ps.get_voltage(1)}")
         print(f"通道1 电流: {ps.get_current(1)}")
 
-        print(f"关闭电源")
+        print("关闭电源")
         # ps.set_on_off(IO.OFF, Channel.CH1)
         time.sleep(2)
 
@@ -303,7 +305,7 @@ if __name__ == "__main__":
         print(f"通道2 测量电流: {ps.measure_current(Channel.CH2)}")
         print(f"通道2 测量功率: {ps.measure_power(Channel.CH2)}")
 
-        print(f"开启电源")
+        print("开启电源")
         # ps.set_on_off(IO.ON, Channel.CH1)
         time.sleep(1)
 

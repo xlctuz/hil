@@ -8,7 +8,7 @@ Copyright (c) 1983-2021 Advantech Co., Ltd.
 ********************************************************************************
 THIS IS AN UNPUBLISHED WORK CONTAINING CONFIDENTIAL AND PROPRIETARY INFORMATION
 WHICH IS THE PROPERTY OF ADVANTECH CORP., ANY DISCLOSURE, USE, OR REPRODUCTION,
-WITHOUT WRITTEN AUTHORIZATION FROM ADVANTECH CORP., IS STRICTLY PROHIBITED. 
+WITHOUT WRITTEN AUTHORIZATION FROM ADVANTECH CORP., IS STRICTLY PROHIBITED.
 
 ================================================================================
 REVISION HISTORY
@@ -30,8 +30,8 @@ $NoKeywords:  $
 *    This example demonstrates how to use Static DI function.
 *
 * Instructions for Running:
-*    1. Set the 'deviceDescription' for opening the device. 
-*    2. Set the 'profilePath' to save the profile path of being initialized device. 
+*    1. Set the 'deviceDescription' for opening the device.
+*    2. Set the 'profilePath' to save the profile path of being initialized device.
 *    3. Set the 'startPort' as the first port for Di scanning.
 *    4. Set the 'portCount' to decide how many sequential ports to operate Di scanning.
 *
@@ -42,89 +42,83 @@ $NoKeywords:  $
 """
 import time, sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
-from CommonUtils import kbhit
 
 from Automation.BDaq import *
 from Automation.BDaq.InstantDiCtrl import InstantDiCtrl
 from Automation.BDaq.InstantDoCtrl import InstantDoCtrl
 from Automation.BDaq.BDaqApi import AdxEnumToString, BioFailed
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Enum
+from sqlalchemy.orm import relationship
+from .channel import Base
+import enum
+
+
 
 deviceDescription = "PCIE-1762H,BID#0"
 profilePath = u"pcie-1762h.xml"
 startPort = 0
 portCount = 1
 
-def AdvInstantDI():
-    ret = ErrorCode.Success
 
-    # Step 1: Create a 'InstantDiCtrl' for DI function.
-    # Select a device by device number or device description and specify the access mode.
-    # In this example we use ModeWrite mode so that we can fully control the device,
-    # including configuring, sampling, etc.
-    instantDiCtrl = InstantDiCtrl(deviceDescription)
-    for _ in range(1):
-        instantDiCtrl.loadProfile = profilePath
-
-        # Step 2: Read DI ports' status and show.
-        print("Reading ports status is in progress, any key to quit!")
-        while not kbhit():
-            ret, data = instantDiCtrl.readAny(startPort, portCount)
-            if BioFailed(ret):
-                break
-
-            for i in range(startPort, startPort + portCount):
-                print("DI port %d status is %#x" % (i, data[i-startPort]))
-            time.sleep(1)
-        print("\n DI output completed !")
-
-    # Step 3: Close device and release any allocated resource
-    instantDiCtrl.dispose()
-
-    # If something wrong in this execution, print the error code on screen for tracking.
-    if BioFailed(ret):
-        enumStr = AdxEnumToString("ErrorCode", ret.value, 256)
-        print("Some error occurred. And the last error code is %#x. [%s]" % (ret.value, enumStr))
-    return 0
+class Status(enum.Enum):
+    HIGH = "high"
+    LOW = "low"
+    NA = "na"
 
 
-def AdvInstantDO():
-    ret = ErrorCode.Success
+class Pcie_1762h_do_channel(Base):
+    __tablename__ = 'pcie_1762h_do_channel'
+    id = Column(Integer, primary_key=True)
+    index = Column(Integer)
+    name = Column(String)
+    status = Column(Enum(Status), default=Status.NA)
 
-    # Step 1: Create a instantDoCtrl for DO function.
-    # Select a device by device number or device description and specify the access mode.
-    # In this example we use ModeWrite mode so that we can fully control the device,
-    # including configuring, sampling, etc.
-    instantDoCtrl = InstantDoCtrl(deviceDescription)
-    for _ in range(1):
-        instantDoCtrl.loadProfile = profilePath
-
-        # Step 2: Write DO ports
-        dataBuffer = [0] * portCount
-        for i in range(startPort, portCount + startPort):
-            inputVal = input("Input a 16 hex number for D0 port %d to output(for example, 0x00): " % i)
-            if not isinstance(inputVal, int):
-                inputVal = int(inputVal, 16)
-
-            dataBuffer[i-startPort] = inputVal
-
-        ret = instantDoCtrl.writeAny(startPort, portCount, dataBuffer)
-        if BioFailed(ret):
-            break
-        print("DO output completed!")
-
-    # Step 3: Close device and release any allocated resource.
-    instantDoCtrl.dispose()
-
-    # If something wrong in this execution, print the error code on screen for tracking.
-    if BioFailed(ret):
-        enumStr = AdxEnumToString("ErrorCode", ret.value, 256)
-        print("Some error occurred. And the last error code is %#x. [%s]" % (ret.value, enumStr))
-
-    return 0
+    pcie_1762h_id = Column(Integer, ForeignKey('pcie_1762h.id'))
+    pcie_1762h = relationship("pcie_1762h", back_populates="do_channels")
 
 
+class Pcie_1762h(Base):
+    __tablename__ = 'pcie_1762h'
+    id = Column(Integer, primary_key=True)
 
+    project = relationship("Project", back_populates="pcie_1762h", uselist=False)
+    do_channels = relationship("Pcie_1762h_do_channel", back_populates="pcie_1762h", cascade="all, delete-orphan")
 
+    def __init__(self, **kwargs):
+        if not self.do_channels:
+            self.do_channels = [Pcie_1762h_do_channel(index=i) for i in range(16)]
+        self.instantDoCtrl = InstantDoCtrl(deviceDescription)
+        self.instantDoCtrl.loadProfile = profilePath
+        super().__init__(**kwargs)
 
-if __name__ == '__main__':
-    AdvInstantDO()
+    def run_test(self):
+        instantDoCtrl = None
+        try:
+            instantDoCtrl = InstantDoCtrl(deviceDescription)
+            instantDoCtrl.loadProfile = profilePath
+
+            port = instantDoCtrl.readAny(0, 2)[1]
+            for c in self.do_channels:
+                i = c.index // 8
+                j = c.index % 8
+                if c.status == Status.HIGH:
+                    port[i] |= 1 << j
+                elif c.status == Status.LOW:
+                    port[i] &= ~(1 << j)
+            instantDoCtrl.writeAny(0, 2, port)
+            return instantDoCtrl.readAny(0, 2)[1]
+        finally:
+            if instantDoCtrl:
+                instantDoCtrl.dispose()
+
+    def get_di(self):
+        instantDiCtrl = None
+        try:
+            instantDiCtrl = InstantDiCtrl(deviceDescription)
+            instantDiCtrl.loadProfile = profilePath
+
+            return instantDiCtrl.readAny(0, 2)[1]
+        finally:
+            if instantDiCtrl:
+                instantDiCtrl.dispose()
+
