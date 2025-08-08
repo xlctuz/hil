@@ -182,7 +182,19 @@ Pane {
                         ps_channel2.currentSeries.append(columnLayout2.currentX, current[2]);
                         ps_channel2.powerSeries.append(columnLayout2.currentX, power[2]);
 
-                        currentX++;
+                        columnLayout2.currentX++;
+
+                        ps_channel.voltageLabel.text = `电压: ${Util.formatData(voltage[0], 3, 6)}`
+                        ps_channel.currentLabel.text = `电流: ${Util.formatData(current[0], 3, 6)}`
+                        ps_channel.powerLabel.text = `功率: ${Util.formatData(power[0], 3, 6)}`
+
+                        ps_channel1.voltageLabel.text = `电压: ${Util.formatData(voltage[1], 3, 6)}`
+                        ps_channel1.currentLabel.text = `电流: ${Util.formatData(current[1], 3, 6)}`
+                        ps_channel1.powerLabel.text = `功率: ${Util.formatData(power[1], 3, 6)}`
+
+                        ps_channel2.voltageLabel.text = `电压: ${Util.formatData(voltage[2], 3, 6)}`
+                        ps_channel2.currentLabel.text = `电流: ${Util.formatData(current[2], 3, 6)}`
+                        ps_channel2.powerLabel.text = `功率: ${Util.formatData(power[2], 3, 6)}`
                     }
                 }
 
