@@ -14,6 +14,11 @@ from core.channel import Base, Channel
 from core.project import Project
 from core.power_supply_it6302 import Power_supply_it6302, Power_supply_it6302_channel, IO, Channel as PSChannel
 from core.pcie_1762h_controller import Pcie_1762h, Pcie_1762h_do_channel, Pcie_1762h_di_channel, Status
+from enum import Enum
+
+class DioChannelType(Enum):
+    DO = 0
+    DI = 1
 from core.visa_resource_manager import rm
 from worker.power_supply_poller import PowerSupplyPoller
 from core.db import engine
@@ -125,11 +130,55 @@ class PowerSupplyProxy(QObject):
         return self._channels[2]
 
 
+class DioChannelProxy(QObject):
+    def __init__(self, channel_data, channel_type, parent=None):
+        super().__init__(parent)
+        self._channel_data = channel_data
+        self._channel_type = channel_type
+
+    @Property(int, constant=True)
+    def index(self):
+        return self._channel_data.index if self._channel_data else -1
+
+    @Property(str, constant=True)
+    def name(self):
+        return self._channel_data.name if self._channel_data else ""
+
+    @Property(str, constant=True)
+    def status(self):
+        return self._channel_data.status.value if self._channel_data and self._channel_data.status else ""
+
+class Pcie1762hProxy(QObject):
+    def __init__(self, pcie_data, parent=None):
+        super().__init__(parent)
+        self._pcie_data = pcie_data
+        self._do_channels = []
+        self._di_channels = []
+        
+        if self._pcie_data:
+            # sort channels by index
+            sorted_do = sorted(self._pcie_data.do_channels, key=lambda c: c.index)
+            sorted_di = sorted(self._pcie_data.di_channels, key=lambda c: c.index)
+            
+            for ch_data in sorted_do:
+                self._do_channels.append(DioChannelProxy(ch_data, DioChannelType.DO, self))
+            for ch_data in sorted_di:
+                self._di_channels.append(DioChannelProxy(ch_data, DioChannelType.DI, self))
+
+    @Property('QVariant', constant=True)
+    def doChannels(self):
+        return self._do_channels
+
+    @Property('QVariant', constant=True)
+    def diChannels(self):
+        return self._di_channels
+
 class ProjectProxy(QObject):
     def __init__(self, project_data, parent=None):
         super().__init__(parent)
         self._project_data = project_data
         self._power_supply = PowerSupplyProxy(project_data.power_supply if project_data else None, self)
+        self._pcie_1762h = Pcie1762hProxy(project_data.pcie_1762h if project_data else None, self)
 
     @Property('QVariant', constant=True)
     def name(self):
@@ -138,6 +187,10 @@ class ProjectProxy(QObject):
     @Property(QObject, constant=True)
     def powerSupply(self):
         return self._power_supply
+
+    @Property(QObject, constant=True)
+    def pcie1762h(self):
+        return self._pcie_1762h
 
 
 class ConfigViewModel(QObject):
@@ -361,6 +414,53 @@ class ConfigViewModel(QObject):
             session.rollback()
         finally:
             session.close()
+
+    @Slot(int, str)
+    def setDoChannelName(self, index, name):
+        if not self._current_project or not self._current_project.pcie_1762h:
+            return
+
+        session = self._Session()
+        try:
+            pcie = session.merge(self._current_project.pcie_1762h)
+            channel = next((ch for ch in pcie.do_channels if ch.index == index), None)
+            if channel:
+                channel.name = name
+                session.commit()
+                self._current_project.pcie_1762h.do_channels[index].name = name
+                self.currentProjectChanged.emit()
+        finally:
+            session.close()
+
+    @Slot(int, str)
+    def setDoChannelStatus(self, index, status):
+        if not self._current_project or not self._current_project.pcie_1762h:
+            return
+
+        session = self._Session()
+        try:
+            pcie = session.merge(self._current_project.pcie_1762h)
+            channel = next((ch for ch in pcie.do_channels if ch.index == index), None)
+            if channel:
+                channel.status = Status[status.upper()]
+                session.commit()
+                self._current_project.pcie_1762h.do_channels[index].status = Status[status.upper()]
+                self.currentProjectChanged.emit()
+        finally:
+            session.close()
+
+    @Slot()
+    def testPcie1762h(self):
+        if not self._current_project or not self._current_project.pcie_1762h:
+            return
+            
+        try:
+            result = self._current_project.pcie_1762h.run_test()
+            print(f"DO test result: {result}")
+            di_status = self._current_project.pcie_1762h.get_di()
+            print(f"DI status: {di_status}")
+        except Exception as e:
+            print(f"Error testing PCIE-1762H: {e}")
 
     @Slot()
     def deleteCurrentProject(self):

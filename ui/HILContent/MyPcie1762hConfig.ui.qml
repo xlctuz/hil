@@ -95,6 +95,8 @@ Pane {
                                             id: textField
                                             Layout.fillWidth: true
                                             placeholderText: qsTr("通道名称")
+                                            text: currentProject.pcie1762h.doChannels[15 - index].name
+                                            onEditingFinished: configViewModel.setDoChannelName(15 - index, text)
                                         }
                                     }
                                     RowLayout {
@@ -108,18 +110,24 @@ Pane {
                                             id: radioButton
                                             text: qsTr("高")
                                             display: AbstractButton.TextOnly
+                                            checked: currentProject.pcie1762h.doChannels[15 - index].status === "high"
+                                            onCheckedChanged: if (checked) configViewModel.setDoChannelStatus(15 - index, "high")
                                         }
 
                                         RadioButton {
                                             id: radioButton1
                                             text: qsTr("低")
                                             display: AbstractButton.TextUnderIcon
+                                            checked: currentProject.pcie1762h.doChannels[15 - index].status === "low"
+                                            onCheckedChanged: if (checked) configViewModel.setDoChannelStatus(15 - index, "low")
                                         }
 
                                         RadioButton {
                                             id: radioButton2
                                             text: qsTr("X")
                                             display: AbstractButton.TextUnderIcon
+                                            checked: currentProject.pcie1762h.doChannels[15 - index].status === "na"
+                                            onCheckedChanged: if (checked) configViewModel.setDoChannelStatus(15 - index, "na")
                                         }
                                     }
                                 }
