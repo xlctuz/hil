@@ -97,8 +97,16 @@ Pane {
                                             id: textField
                                             Layout.fillWidth: true
                                             placeholderText: qsTr("通道名称")
-                                            text: pcie1762h?.doChannels?.[15 - index]?.name || ""
-                                            onEditingFinished: configViewModel.setDoChannelName(15 - index, text)
+                                            text: pcie1762h?.doChannels[15 - index]?.name
+                                                || ""
+                                        }
+
+                                        Connections {
+                                            target: textField
+                                            function onEditingFinished() {
+                                                configViewModel.setDoChannelName(
+                                                    15 - index, text)
+                                            }
                                         }
                                     }
                                     RowLayout {
@@ -112,24 +120,46 @@ Pane {
                                             id: radioButton
                                             text: qsTr("高")
                                             display: AbstractButton.TextOnly
-                                            checked: pcie1762h?.doChannels?.[15 - index]?.status === "high"
-                                            onCheckedChanged: if (checked) configViewModel.setDoChannelStatus(15 - index, "high")
+                                            checked: pcie1762h?.doChannels[15 - index]?.status === "high"
                                         }
 
                                         RadioButton {
                                             id: radioButton1
                                             text: qsTr("低")
                                             display: AbstractButton.TextUnderIcon
-                                            checked: pcie1762h?.doChannels?.[15 - index]?.status === "low"
-                                            onCheckedChanged: if (checked) configViewModel.setDoChannelStatus(15 - index, "low")
+                                            checked: pcie1762h?.doChannels[15 - index]?.status === "low"
                                         }
 
                                         RadioButton {
                                             id: radioButton2
                                             text: qsTr("X")
                                             display: AbstractButton.TextUnderIcon
-                                            checked: pcie1762h?.doChannels?.[15 - index]?.status === "na"
-                                            onCheckedChanged: if (checked) configViewModel.setDoChannelStatus(15 - index, "na")
+                                            checked: pcie1762h?.doChannels[15 - index]?.status === "na"
+                                        }
+
+                                        Connections {
+                                            target: radioButton
+                                            function onCheckedChanged() {
+                                                if (radioButton.checked) {
+                                                    configViewModel.setDoChannelStatus(15 - index, "high")
+                                                }
+                                            }
+                                        }
+                                        Connections {
+                                            target: radioButton1
+                                            function onCheckedChanged() {
+                                                if (radioButton1.checked) {
+                                                    configViewModel.setDoChannelStatus(15 - index, "low")
+                                                }
+                                            }
+                                        }
+                                        Connections {
+                                            target: radioButton2
+                                            function onCheckedChanged() {
+                                                if (radioButton2.checked) {
+                                                    configViewModel.setDoChannelStatus(15 - index, "na")
+                                                }
+                                            }
                                         }
                                     }
                                 }
