@@ -17,6 +17,7 @@ from sqlalchemy.orm import sessionmaker
 from core.channel import Base, Channel
 from core.project import Project
 from core.power_supply_it6302 import Power_supply_it6302
+from core.pcie_1762h_controller import Pcie_1762h
 from view.config_view import ConfigViewModel
 from core.db import engine
 
@@ -69,6 +70,11 @@ if __name__ == "__main__":
         ps1.channels[2].voltage = 3.3
         ps1.channels[2].current = 1.2
         project1.power_supply = ps1
+        
+        # Add PCIe-1762H controller (通道初始化已在类内部实现)
+        pcie1 = Pcie_1762h(device_name="PCIe-1762H-1")
+        project1.pcie_1762h = pcie1
+        
         project1.channel = channels[0]
 
         session.add(project1)
@@ -84,6 +90,10 @@ if __name__ == "__main__":
         ps2.channels[2].voltage = 4.3
         ps2.channels[2].current = 2.2
         project2.power_supply = ps2
+        
+        # Add PCIe-1762H controller (通道初始化已在类内部实现)
+        pcie2 = Pcie_1762h(device_name="PCIe-1762H-2")
+        project2.pcie_1762h = pcie2
         session.add(project2)
 
         # Project 3 for Channel 2
@@ -96,6 +106,11 @@ if __name__ == "__main__":
         ps3.channels[2].voltage = 4.3
         ps3.channels[2].current = 2.2
         project3.power_supply = ps3
+        
+        # Add PCIe-1762H controller (通道初始化已在类内部实现)
+        pcie3 = Pcie_1762h(device_name="PCIe-1762H-3")
+        project3.pcie_1762h = pcie3
+        
         project3.channel = channels[1]
         session.add(project3)
 
