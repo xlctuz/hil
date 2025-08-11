@@ -75,8 +75,8 @@ ColumnLayout {
                 width: 200
                 height: 200
                 Layout.fillHeight: true
-                Layout.maximumWidth: 300
-                Layout.minimumWidth: 250
+                Layout.maximumWidth: 250
+                Layout.minimumWidth: 200
 
                 ScrollView {
                     id: scrollView1
@@ -108,9 +108,8 @@ ColumnLayout {
                     RowLayout {
                         id: rowLayout6
                         width: 100
-                        height: 100
-                        Layout.maximumHeight: 70
-                        Layout.minimumHeight: 70
+                        Layout.fillHeight: false
+                        Layout.alignment: Qt.AlignLeft | Qt.AlignTop
                         Layout.fillWidth: true
 
                         TextField {
@@ -124,7 +123,6 @@ ColumnLayout {
                         Item {
                             id: item6
                             width: 200
-                            height: 200
                             Layout.fillHeight: true
                             Layout.fillWidth: true
                         }

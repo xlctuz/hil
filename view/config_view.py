@@ -269,53 +269,6 @@ class ConfigViewModel(QObject):
         finally:
             session.close()
 
-    @Slot(int, str)
-    def setDoChannelName(self, index, name):
-        if not self._current_project or not self._current_project.pcie_1762h:
-            return
-
-        session = self._Session()
-        try:
-            pcie = session.merge(self._current_project.pcie_1762h)
-            channel = next((ch for ch in pcie.do_channels if ch.index == index), None)
-            if channel:
-                channel.name = name
-                session.commit()
-                self._current_project.pcie_1762h.do_channels[index].name = name
-                self.currentProjectChanged.emit()
-        finally:
-            session.close()
-
-    @Slot(int, str)
-    def setDoChannelStatus(self, index, status):
-        if not self._current_project or not self._current_project.pcie_1762h:
-            return
-
-        session = self._Session()
-        try:
-            pcie = session.merge(self._current_project.pcie_1762h)
-            channel = next((ch for ch in pcie.do_channels if ch.index == index), None)
-            if channel:
-                channel.status = Status[status.upper()]
-                session.commit()
-                self._current_project.pcie_1762h.do_channels[index].status = Status[status.upper()]
-                # self.currentProjectChanged.emit()
-        finally:
-            session.close()
-
-    @Slot()
-    def testPcie1762h(self):
-        if not self._current_project or not self._current_project.pcie_1762h:
-            return
-
-        try:
-            result = self._current_project.pcie_1762h.run_test()
-            print(f"DO test result: {result}")
-            di_status = self._current_project.pcie_1762h.get_di()
-            print(f"DI status: {di_status}")
-        except Exception as e:
-            print(f"Error testing PCIE-1762H: {e}")
-
     @Slot()
     def deleteCurrentProject(self):
         if not self._current_project:
