@@ -8,6 +8,8 @@ Pane {
     height: 800
     z: 0
 
+    property var pcie1762h: null
+
     ColumnLayout {
         id: columnLayout4
         anchors.fill: parent
@@ -43,6 +45,24 @@ Pane {
                     text: qsTr("测试")
                     Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                 }
+
+                Connections {
+                    target: button
+                    function onClicked () {
+                        if (pcie1762h) {
+                            pcie1762h.reset()
+                        }
+                    }
+                }
+
+                Connections {
+                    target: button1
+                    function onClicked () {
+                        if (pcie1762h) {
+                            pcie1762h.test()
+                        }
+                    }
+                }
             }
         }
 
@@ -77,8 +97,6 @@ Pane {
 
                             GroupBox {
                                 id: groupBox
-                                width: 200
-                                height: 200
                                 spacing: 2
                                 title: qsTr(`${15 - index}`)
 
@@ -89,37 +107,86 @@ Pane {
 
                                     RowLayout {
                                         id: rowLayout1
-                                        width: 100
+                                        width: 80
 
                                         TextField {
                                             id: textField
                                             Layout.fillWidth: true
                                             placeholderText: qsTr("通道名称")
+                                            text: pcie1762h?.doChannels[15 - index]?.name
+                                                || ""
                                         }
-                                    }
-                                    RowLayout {
-                                        id: rowLayout
-                                        width: 100
-                                        spacing: 5
-                                        layoutDirection: Qt.LeftToRight
-                                        uniformCellSizes: false
 
                                         RadioButton {
                                             id: radioButton
                                             text: qsTr("高")
-                                            display: AbstractButton.TextOnly
+                                            display: AbstractButton.IconOnly
+                                            checked: pcie1762h?.doChannels[15 - index]?.status
+                                                === "high"
                                         }
 
                                         RadioButton {
                                             id: radioButton1
                                             text: qsTr("低")
-                                            display: AbstractButton.TextUnderIcon
+                                            display: AbstractButton.TextBesideIcon
+                                            checked: pcie1762h?.doChannels[15 - index]?.status
+                                                === "low"
                                         }
 
                                         RadioButton {
                                             id: radioButton2
                                             text: qsTr("X")
-                                            display: AbstractButton.TextUnderIcon
+                                            display: AbstractButton.TextBesideIcon
+                                            checked: pcie1762h?.doChannels[15 - index]?.status
+                                                === "na"
+                                        }
+
+                                        Connections {
+                                            target: textField
+                                            function onEditingFinished() {
+                                                if (pcie1762h) {
+                                                    pcie1762h.setDoChannelName(15 - index, textField.text)
+                                                }
+                                            }
+                                        }
+                                    }
+                                    RowLayout {
+                                        id: rowLayout
+                                        width: 80
+                                        spacing: 5
+                                        layoutDirection: Qt.LeftToRight
+                                        uniformCellSizes: false
+
+                                        Connections {
+                                            target: radioButton
+                                            function onCheckedChanged() {
+                                                if (radioButton.checked) {
+                                                    if (pcie1762h) {
+                                                        console.log(pcie1762h)
+                                                        pcie1762h.setDoChannelStatus(15 - index, "high")
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        Connections {
+                                            target: radioButton1
+                                            function onCheckedChanged() {
+                                                if (radioButton1.checked) {
+                                                    if (pcie1762h) {
+                                                        pcie1762h.setDoChannelStatus(15 - index, "low")
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        Connections {
+                                            target: radioButton2
+                                            function onCheckedChanged() {
+                                                if (radioButton2.checked) {
+                                                    if (pcie1762h) {
+                                                        pcie1762h.setDoChannelStatus(15 - index, "na")
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -136,15 +203,13 @@ Pane {
                     Flow {
                         id: flow1
                         anchors.fill: parent
-                        spacing: 5
+                        spacing: 20
 
                         Repeater {
                             id: repeater1
                             model: 16
                             ColumnLayout {
                                 id: columnLayout1
-                                width: 100
-                                height: 100
                                 spacing: 10
                                 Label {
                                     id: label2
@@ -154,25 +219,11 @@ Pane {
                                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                                 }
 
-                                Rectangle {
-                                    id: rectangle
-                                    width: 30
-                                    height: 30
-                                    color: "#44ac34"
-                                    radius: 15
-                                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                                    Layout.fillHeight: false
+                                MyDIOIndicator {
+                                    id: rectangle2
                                     Layout.fillWidth: false
-
-                                    Label {
-                                        id: label
-                                        color: "#f5f5f5"
-                                        text: qsTr("高")
-                                        anchors.fill: parent
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                                    }
+                                    Layout.fillHeight: false
+                                    state: pcie1762h?.doEchos?.[index].status || "na"
                                 }
                             }
                             Layout.fillWidth: true
@@ -193,44 +244,27 @@ Pane {
                     Flow {
                         id: flow3
                         anchors.fill: parent
-                        spacing: 5
+                        spacing: 20
 
                         Repeater {
                             id: repeater2
                             model: 16
                             ColumnLayout {
                                 id: columnLayout2
-                                width: 100
-                                height: 100
                                 spacing: 10
                                 Label {
                                     id: label3
                                     text: `${15 - index}`
                                     horizontalAlignment: Text.AlignHCenter
                                     verticalAlignment: Text.AlignVCenter
-                                    Layout.minimumWidth: 50
-                                    Layout.maximumWidth: 50
                                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                                 }
 
-                                Rectangle {
+                                MyDIOIndicator {
                                     id: rectangle1
-                                    width: 30
-                                    height: 30
-                                    color: "#44ac34"
-                                    radius: 15
-                                    Label {
-                                        id: label1
-                                        color: "#f5f5f5"
-                                        text: qsTr("高")
-                                        anchors.fill: parent
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                                    }
-                                    Layout.fillWidth: false
                                     Layout.fillHeight: false
-                                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                                    Layout.fillWidth: false
+                                    state: pcie1762h?.diEchos?.[index].status || "na"
                                 }
                             }
                             Layout.fillWidth: true
@@ -246,3 +280,9 @@ Pane {
         }
     }
 }
+
+/*##^##
+  Designer {
+  D{i:0}D{i:20;invisible:true}D{i:29}
+  }
+  ##^##*/

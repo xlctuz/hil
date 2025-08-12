@@ -75,8 +75,8 @@ ColumnLayout {
                 width: 200
                 height: 200
                 Layout.fillHeight: true
-                Layout.maximumWidth: 300
-                Layout.minimumWidth: 250
+                Layout.maximumWidth: 250
+                Layout.minimumWidth: 200
 
                 ScrollView {
                     id: scrollView1
@@ -88,7 +88,8 @@ ColumnLayout {
                         anchors.top: parent.top
                         anchors.leftMargin: 0
                         anchors.topMargin: 0
-                        model: configViewModel.projectsModel
+                        model: configViewModel?.projectsModel
+                        projectModel : configViewModel
                     }
                 }
             }
@@ -108,23 +109,21 @@ ColumnLayout {
                     RowLayout {
                         id: rowLayout6
                         width: 100
-                        height: 100
-                        Layout.maximumHeight: 70
-                        Layout.minimumHeight: 70
+                        Layout.fillHeight: false
+                        Layout.alignment: Qt.AlignLeft | Qt.AlignTop
                         Layout.fillWidth: true
 
                         TextField {
                             id: textFieldProjectName
                             Layout.preferredWidth: 200
                             placeholderText: qsTr("项目名称")
-                            text: configViewModel.currentProject.name || ""
+                            text: configViewModel?.currentProject.name || ""
                             readOnly: true
                         }
 
                         Item {
                             id: item6
                             width: 200
-                            height: 200
                             Layout.fillHeight: true
                             Layout.fillWidth: true
                         }
@@ -203,13 +202,14 @@ ColumnLayout {
                                 id: it6302Config
                                 height: swipeView.height
                                 width: swipeView.width
-                                powerSupply: configViewModel.currentProject ? configViewModel.currentProject.powerSupply : null
+                                powerSupply: configViewModel?.currentProject?.powerSupply
                             }
 
                             MyPcie1762hConfig {
                                 id: pcie1762hConfig
                                 height: swipeView.height
                                 width: swipeView.width
+                                pcie1762h: configViewModel?.currentProject?.pcie1762h
                             }
 
                             MyPci1720uConfig {

@@ -3,14 +3,17 @@ import QtQuick.Controls 6.7
 
 ListView {
     id: listViewProj
+    property bool showFooter: true
+    property var projectModel: null
+
     delegate: Row {
         id: row
-        width: 200
+        width: 150
         spacing: 5
 
         Button {
             id: btnProject
-            width: 200
+            width: 150
             height: 55
             text: model.name
             checked: model.checked
@@ -20,30 +23,14 @@ ListView {
         Connections {
             target: btnProject
             function onClicked() {
-                configViewModel.selectProject(index)
+                projectModel?.selectProject(index)
             }
         }
     }
 
-    footer: Row {
+    footer: MyAdd_Project {
         id: add_row
-        width: 200
-        spacing: 5
-
-        Button {
-            id: btnCreateProject
-            width: 200
-            height: 55
-            text: "+"
-        }
-
-        Connections {
-            target: btnCreateProject
-            function onClicked() {
-                var newName = "New Project " + (configViewModel.projectsModel.rowCount() + 1)
-                configViewModel.addProject(newName)
-            }
-        }
+        visible: showFooter
     }
 }
 

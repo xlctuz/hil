@@ -7,128 +7,26 @@ import traceback
 # Add core to path to import models
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, joinedload
+from sqlalchemy.orm import joinedload
 
 from core.channel import Base, Channel
 from core.project import Project
 from core.power_supply_it6302 import Power_supply_it6302, Power_supply_it6302_channel, IO, Channel as PSChannel
-from core.visa_resource_manager import rm
+from core.pcie_1762h_controller import Pcie_1762h, Pcie_1762h_do_channel, Pcie_1762h_di_channel, Status
+from enum import Enum
 from worker.power_supply_poller import PowerSupplyPoller
-from core.db import engine
-
-
-class ProjectModel(QAbstractListModel):
-    NameRole = Qt.UserRole + 1
-    CheckedRole = Qt.UserRole + 2
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._projects = []
-
-    def data(self, index, role=Qt.DisplayRole):
-        if not index.isValid() or not (0 <= index.row() < len(self._projects)):
-            return None
-        project = self._projects[index.row()]
-        if role == self.NameRole:
-            return project.name
-        if role == self.CheckedRole:
-            return getattr(project, 'checked', False)
-        return None
-
-    def rowCount(self, parent=QModelIndex()):
-        return len(self._projects)
-
-    def roleNames(self):
-        return {
-            self.NameRole: b'name',
-            self.CheckedRole: b'checked'
-        }
-
-    def set_projects(self, projects):
-        self.beginResetModel()
-        self._projects = projects
-        # Add checked attribute for UI state
-        for p in self._projects:
-            p.checked = False
-        self.endResetModel()
-
-    def get_project(self, row):
-        if 0 <= row < len(self._projects):
-            return self._projects[row]
-        return None
-
-    def set_checked(self, row, checked=True):
-        if 0 <= row < len(self._projects):
-            # Uncheck others
-            for i, p in enumerate(self._projects):
-                if i != row and getattr(p, 'checked', False):
-                    p.checked = False
-                    self.dataChanged.emit(self.index(i, 0), self.index(i, 0), [self.CheckedRole])
-
-            # Check selected
-            project = self._projects[row]
-            project.checked = checked
-            self.dataChanged.emit(self.index(row, 0), self.index(row, 0), [self.CheckedRole])
-
-
-class PowerSupplyChannelProxy(QObject):
-    def __init__(self, channel_data, parent=None):
-        super().__init__(parent)
-        self._channel_data = channel_data
-
-    @Property('QVariant', constant=True)
-    def voltage(self):
-        return self._channel_data.voltage if self._channel_data and self._channel_data.voltage is not None else None
-
-    @Property('QVariant', constant=True)
-    def current(self):
-        return self._channel_data.current if self._channel_data and self._channel_data.current is not None else None
-
-class PowerSupplyProxy(QObject):
-    resourceNameChanged = Signal()
-    baudRateChanged = Signal()
-
-    def __init__(self, power_supply_data, parent=None):
-        super().__init__(parent)
-        self._power_supply_data = power_supply_data
-        self._channels = []
-        if self._power_supply_data:
-            # sort channels by index
-            sorted_channels = sorted(self._power_supply_data.channels, key=lambda c: c.index)
-            for ch_data in sorted_channels:
-                self._channels.append(PowerSupplyChannelProxy(ch_data, self))
-        # ensure 3 channels exist for QML binding
-        while len(self._channels) < 3:
-            self._channels.append(PowerSupplyChannelProxy(None, self))
-
-    @Property(str, notify=resourceNameChanged)
-    def resource_name(self):
-        return self._power_supply_data.resource_name if self._power_supply_data else ""
-
-    @Property(int, notify=baudRateChanged)
-    def baud_rate(self):
-        return self._power_supply_data.baud_rate if self._power_supply_data else 9600
-
-    @Property(QObject, constant=True)
-    def ch1(self):
-        return self._channels[0]
-
-
-    @Property(QObject, constant=True)
-    def ch2(self):
-        return self._channels[1]
-
-    @Property(QObject, constant=True)
-    def ch3(self):
-        return self._channels[2]
-
+from core.visa_resource_manager import rm
+from core.db import Session
+from view.project_model import ProjectModel
+from view.power_supply_proxy import PowerSupplyProxy
+from view.pcie_1762h_proxy import Pcie1762hProxy
 
 class ProjectProxy(QObject):
     def __init__(self, project_data, parent=None):
         super().__init__(parent)
         self._project_data = project_data
         self._power_supply = PowerSupplyProxy(project_data.power_supply if project_data else None, self)
+        self._pcie_1762h = Pcie1762hProxy(project_data.pcie_1762h if project_data else None, self)
 
     @Property('QVariant', constant=True)
     def name(self):
@@ -137,6 +35,10 @@ class ProjectProxy(QObject):
     @Property(QObject, constant=True)
     def powerSupply(self):
         return self._power_supply
+
+    @Property(QObject, constant=True)
+    def pcie1762h(self):
+        return self._pcie_1762h
 
 
 class ConfigViewModel(QObject):
@@ -148,10 +50,6 @@ class ConfigViewModel(QObject):
         super().__init__(parent)
         self._poller_thread = None
         self._poller = None
-
-
-        Base.metadata.create_all(engine)
-        self._Session = sessionmaker(bind=engine)
 
         self._project_model = ProjectModel()
         self._current_project = None
@@ -179,7 +77,7 @@ class ConfigViewModel(QObject):
         if not self._current_project or not self._current_project.power_supply:
             return
 
-        session = self._Session()
+        session = Session()
         try:
             power_supply = session.merge(self._current_project.power_supply)
             power_supply.resource_name = resource_name
@@ -202,11 +100,14 @@ class ConfigViewModel(QObject):
     def selectChannel(self, index):
         self._current_channel_index = index
         print(f"Channel {index + 1} selected")
-        session = self._Session()
+        session = Session()
         try:
             # Assuming channel IDs are 1, 2, 3...
             channel_id = index + 1
-            projects = session.query(Project).filter(Project.channel_id == channel_id).options(joinedload(Project.power_supply).joinedload(Power_supply_it6302.channels)).all()
+            projects = session.query(Project).filter(Project.channel_id == channel_id) \
+                                             .options(joinedload(Project.power_supply).joinedload(Power_supply_it6302.channels),
+                                                      joinedload(Project.pcie_1762h).options(joinedload(Pcie_1762h.do_channels), joinedload(Pcie_1762h.di_channels))) \
+                                             .all()
             self._project_model.set_projects(projects)
         finally:
             session.close()
@@ -222,7 +123,7 @@ class ConfigViewModel(QObject):
         if not name:
             return
         print(f"Adding project {name} to channel {self._current_channel_index + 1}")
-        session = self._Session()
+        session = Session()
         try:
             channel_id = self._current_channel_index + 1
             # Create a new project
@@ -232,6 +133,9 @@ class ConfigViewModel(QObject):
             # Create default power supply config
             power_supply = Power_supply_it6302(resource_name="ASRL3::INSTR", baud_rate=9600)
             new_project.power_supply = power_supply
+
+            pcie_1762h = Pcie_1762h()
+            new_project.pcie_1762h = pcie_1762h
 
             session.add(new_project)
             session.commit()
@@ -247,7 +151,7 @@ class ConfigViewModel(QObject):
         if not self._current_project or not self._current_project.power_supply:
             return
 
-        session = self._Session()
+        session = Session()
         try:
             power_supply = session.merge(self._current_project.power_supply)
             channel = next((ch for ch in power_supply.channels if ch.index == channel_index), None)
@@ -269,7 +173,7 @@ class ConfigViewModel(QObject):
         if not self._current_project or not self._current_project.power_supply:
             return
 
-        session = self._Session()
+        session = Session()
         try:
             power_supply = session.merge(self._current_project.power_supply)
             channel = next((ch for ch in power_supply.channels if ch.index == channel_index), None)
@@ -325,9 +229,9 @@ class ConfigViewModel(QObject):
             if self._poller_thread:
                 self._poller_thread.quit()
                 self._poller_thread.wait()
-            self._poller_thread = None
-            self._poller = None
-            print("Test stopped and poller cleaned up.")
+                self._poller_thread = None
+                self._poller = None
+                print("Test stopped and poller cleaned up.")
 
     @Slot(dict)
     def _on_power_supply_data_updated(self, data):
@@ -341,20 +245,20 @@ class ConfigViewModel(QObject):
             return
 
         print(f"Resetting power supply settings for project {self._current_project.name}")
-        session = self._Session()
+        session = Session()
         try:
             power_supply = session.merge(self._current_project.power_supply)
             for channel in power_supply.channels:
                 channel.voltage = None
                 channel.current = None
-            session.commit()
-            print("Power supply settings reset.")
+                session.commit()
+                print("Power supply settings reset.")
 
             # Refresh current project data to update UI
             for channel_data in self._current_project.power_supply.channels:
                 channel_data.voltage = None
                 channel_data.current = None
-            self.currentProjectChanged.emit()
+                self.currentProjectChanged.emit()
         except Exception as e:
             print(f"Error resetting power supply settings: {e}")
             session.rollback()
@@ -368,7 +272,7 @@ class ConfigViewModel(QObject):
             return
 
         print(f"Deleting project {self._current_project.name} (ID: {self._current_project.id})")
-        session = self._Session()
+        session = Session()
         try:
             # Re-attach the object to the session before deleting
             project_to_delete = session.merge(self._current_project)

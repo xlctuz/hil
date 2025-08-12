@@ -26,10 +26,13 @@ Rectangle {
     ColumnLayout {
         id: columnLayout
         anchors.fill: parent
+        z: 1
 
         RowLayout {
             id: rowLayout
             height: 60
+            z: 0
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
             Layout.minimumHeight: 80
             Layout.maximumHeight: 80
             Layout.fillWidth: true
@@ -107,28 +110,28 @@ Rectangle {
                 fillMode: Image.PreserveAspectFit
             }
         }
+    }
 
-        Page {
-            id: page
-            width: 200
-            height: 200
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+    Page {
+        id: page
+        anchors.fill: parent
+        Layout.fillWidth: true
+        Layout.fillHeight: true
 
-            MyMainView {
-                id: mainView
-                anchors.fill: parent
-            }
+        MyMainView {
+            id: mainView
+            anchors.fill: parent
+            mainViewModel: backend?.mainViewModel
+        }
 
-            MyConfigView {
-                id: configView
-                anchors.fill: parent
-            }
-            StackView {
-                id: mainStack
-                anchors.fill: parent
-                initialItem: mainView
-            }
+        MyConfigView {
+            id: configView
+            anchors.fill: parent
+        }
+        StackView {
+            id: mainStack
+            anchors.fill: parent
+            initialItem: mainView
         }
     }
 }

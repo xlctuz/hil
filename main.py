@@ -17,18 +17,25 @@ from sqlalchemy.orm import sessionmaker
 from core.channel import Base, Channel
 from core.project import Project
 from core.power_supply_it6302 import Power_supply_it6302
+from core.pcie_1762h_controller import Pcie_1762h
 from view.config_view import ConfigViewModel
 from core.db import engine
+from view.main_view import MainViewModel
 
 class App(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
 
         self._channels = [Channel(0), Channel(1), Channel(2)]
+        self._main_view_model = MainViewModel(self)
 
     @Property(list, constant=True)
     def channels(self):
         return self._channels
+
+    @Property(QObject, constant=True)
+    def mainViewModel(self):
+        return self._main_view_model
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -53,7 +60,9 @@ if __name__ == "__main__":
     else:
         channels = session.query(Channel).order_by(Channel.id).all()
 
+
     # Create a sample project for each channel
+    # TODO Add Pcie_1762h data
     if session.query(Project).count() == 0:
         logger.info("Creating and saving new projects...")
 
@@ -67,7 +76,13 @@ if __name__ == "__main__":
         ps1.channels[2].voltage = 3.3
         ps1.channels[2].current = 1.2
         project1.power_supply = ps1
+
+        # Add PCIe-1762H controller (通道初始化已在类内部实现)
+        pcie1 = Pcie_1762h()
+        project1.pcie_1762h = pcie1
+
         project1.channel = channels[0]
+
         session.add(project1)
 
         # Project 2 for Channel 1
@@ -81,6 +96,10 @@ if __name__ == "__main__":
         ps2.channels[2].voltage = 4.3
         ps2.channels[2].current = 2.2
         project2.power_supply = ps2
+
+        # Add PCIe-1762H controller (通道初始化已在类内部实现)
+        pcie2 = Pcie_1762h()
+        project2.pcie_1762h = pcie2
         session.add(project2)
 
         # Project 3 for Channel 2
@@ -93,6 +112,11 @@ if __name__ == "__main__":
         ps3.channels[2].voltage = 4.3
         ps3.channels[2].current = 2.2
         project3.power_supply = ps3
+
+        # Add PCIe-1762H controller (通道初始化已在类内部实现)
+        pcie3 = Pcie_1762h()
+        project3.pcie_1762h = pcie3
+
         project3.channel = channels[1]
         session.add(project3)
 
