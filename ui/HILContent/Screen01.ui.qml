@@ -121,6 +121,7 @@ Rectangle {
         MyMainView {
             id: mainView
             anchors.fill: parent
+            mainViewModel: backend?.mainViewModel
         }
 
         MyConfigView {

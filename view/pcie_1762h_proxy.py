@@ -1,7 +1,7 @@
 from enum import Enum
 from PySide6.QtCore import QObject, Property, Slot, QAbstractListModel, QModelIndex, Qt, Signal, QThread, QTimer
 from core.pcie_1762h_controller import Pcie_1762h, Pcie_1762h_do_channel, Pcie_1762h_di_channel, Status
-from core.db import engine
+from core.db import Session
 from sqlalchemy.orm import sessionmaker, joinedload
 from common.logger import logger
 
@@ -69,7 +69,6 @@ class Pcie1762hProxy(QObject):
         self._pcie_data = pcie_data
         self._do_channels = []
         self._di_channels = []
-        self._Session = sessionmaker(bind=engine)
 
         if self._pcie_data:
             # sort channels by index
@@ -101,7 +100,7 @@ class Pcie1762hProxy(QObject):
 
     @Slot(int, str)
     def setDoChannelName(self, index, name):
-        session = self._Session()
+        session = Session()
         try:
             pcie = session.merge(self._pcie_data)
             channel = next((ch for ch in pcie.do_channels if ch.index == index), None)
@@ -114,9 +113,8 @@ class Pcie1762hProxy(QObject):
 
     @Slot(int, str)
     def setDoChannelStatus(self, index, status):
-        session = self._Session()
+        session = Session()
         try:
-            logger.info(self._pcie_data)
             pcie = session.merge(self._pcie_data)
             channel = next((ch for ch in pcie.do_channels if ch.index == index), None)
             if channel:
@@ -129,7 +127,7 @@ class Pcie1762hProxy(QObject):
     @Slot()
     def reset(self):
         logger.info('pcie1762h reset')
-        session = self._Session()
+        session = Session()
         try:
             session.merge(self._pcie_data)
 

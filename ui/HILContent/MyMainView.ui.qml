@@ -7,6 +7,8 @@ ColumnLayout {
     width: 1500
     height: 800
     visible: true
+    property var mainViewModel: null
+
     RowLayout {
         id: rowLayout1
         width: 100
@@ -87,8 +89,9 @@ ColumnLayout {
                     anchors.bottom: parent.bottom
                     anchors.leftMargin: 12
                     anchors.topMargin: 0
-                    model: []
+                    model: mainViewModel?.projectsModel
                     showFooter: false
+                    projectModel: mainViewModel
                 }
             }
         }
@@ -97,6 +100,14 @@ ColumnLayout {
             id: projectDetail
             Layout.fillHeight: true
             Layout.fillWidth: true
+            currentProj: mainViewModel?.currentProject
+        }
+    }
+
+    Connections {
+        target: mainView
+        Component.onCompleted: function () {
+            mainViewModel.selectChannel(0)
         }
     }
 }

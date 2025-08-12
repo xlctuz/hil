@@ -13,6 +13,7 @@ class PowerSupplyChannelProxy(QObject):
     def current(self):
         return self._channel_data.current if self._channel_data and self._channel_data.current is not None else None
 
+
 class PowerSupplyProxy(QObject):
     resourceNameChanged = Signal()
     baudRateChanged = Signal()
@@ -41,7 +42,6 @@ class PowerSupplyProxy(QObject):
     @Property(QObject, constant=True)
     def ch1(self):
         return self._channels[0]
-
 
     @Property(QObject, constant=True)
     def ch2(self):

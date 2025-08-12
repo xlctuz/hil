@@ -7,18 +7,16 @@ import traceback
 # Add core to path to import models
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, joinedload
+from sqlalchemy.orm import joinedload
 
 from core.channel import Base, Channel
 from core.project import Project
 from core.power_supply_it6302 import Power_supply_it6302, Power_supply_it6302_channel, IO, Channel as PSChannel
 from core.pcie_1762h_controller import Pcie_1762h, Pcie_1762h_do_channel, Pcie_1762h_di_channel, Status
 from enum import Enum
-from core.db import engine
 from worker.power_supply_poller import PowerSupplyPoller
 from core.visa_resource_manager import rm
-from core.db import engine
+from core.db import Session
 from view.project_model import ProjectModel
 from view.power_supply_proxy import PowerSupplyProxy
 from view.pcie_1762h_proxy import Pcie1762hProxy
@@ -53,8 +51,6 @@ class ConfigViewModel(QObject):
         self._poller_thread = None
         self._poller = None
 
-        self._Session = sessionmaker(bind=engine)
-
         self._project_model = ProjectModel()
         self._current_project = None
         self._current_project_proxy = ProjectProxy(None)
@@ -81,7 +77,7 @@ class ConfigViewModel(QObject):
         if not self._current_project or not self._current_project.power_supply:
             return
 
-        session = self._Session()
+        session = Session()
         try:
             power_supply = session.merge(self._current_project.power_supply)
             power_supply.resource_name = resource_name
@@ -104,7 +100,7 @@ class ConfigViewModel(QObject):
     def selectChannel(self, index):
         self._current_channel_index = index
         print(f"Channel {index + 1} selected")
-        session = self._Session()
+        session = Session()
         try:
             # Assuming channel IDs are 1, 2, 3...
             channel_id = index + 1
@@ -127,7 +123,7 @@ class ConfigViewModel(QObject):
         if not name:
             return
         print(f"Adding project {name} to channel {self._current_channel_index + 1}")
-        session = self._Session()
+        session = Session()
         try:
             channel_id = self._current_channel_index + 1
             # Create a new project
@@ -155,7 +151,7 @@ class ConfigViewModel(QObject):
         if not self._current_project or not self._current_project.power_supply:
             return
 
-        session = self._Session()
+        session = Session()
         try:
             power_supply = session.merge(self._current_project.power_supply)
             channel = next((ch for ch in power_supply.channels if ch.index == channel_index), None)
@@ -177,7 +173,7 @@ class ConfigViewModel(QObject):
         if not self._current_project or not self._current_project.power_supply:
             return
 
-        session = self._Session()
+        session = Session()
         try:
             power_supply = session.merge(self._current_project.power_supply)
             channel = next((ch for ch in power_supply.channels if ch.index == channel_index), None)
@@ -249,7 +245,7 @@ class ConfigViewModel(QObject):
             return
 
         print(f"Resetting power supply settings for project {self._current_project.name}")
-        session = self._Session()
+        session = Session()
         try:
             power_supply = session.merge(self._current_project.power_supply)
             for channel in power_supply.channels:
@@ -276,7 +272,7 @@ class ConfigViewModel(QObject):
             return
 
         print(f"Deleting project {self._current_project.name} (ID: {self._current_project.id})")
-        session = self._Session()
+        session = Session()
         try:
             # Re-attach the object to the session before deleting
             project_to_delete = session.merge(self._current_project)

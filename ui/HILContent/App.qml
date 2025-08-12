@@ -24,7 +24,6 @@ Window {
         target: mainScreen.configView
         Component.onCompleted: function() {configViewModel.selectChannel(0) }
     }
-
     Connections {
         target: mainScreen.configView.tabBarChannel
         function onCurrentIndexChanged() {

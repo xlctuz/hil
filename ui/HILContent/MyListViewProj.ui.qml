@@ -4,6 +4,7 @@ import QtQuick.Controls 6.7
 ListView {
     id: listViewProj
     property bool showFooter: true
+    property var projectModel: null
 
     delegate: Row {
         id: row
@@ -22,7 +23,7 @@ ListView {
         Connections {
             target: btnProject
             function onClicked() {
-                configViewModel.selectProject(index)
+                projectModel?.selectProject(index)
             }
         }
     }

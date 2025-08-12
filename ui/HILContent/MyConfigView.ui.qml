@@ -89,6 +89,7 @@ ColumnLayout {
                         anchors.leftMargin: 0
                         anchors.topMargin: 0
                         model: configViewModel?.projectsModel
+                        projectModel : configViewModel
                     }
                 }
             }

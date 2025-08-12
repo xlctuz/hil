@@ -20,16 +20,22 @@ from core.power_supply_it6302 import Power_supply_it6302
 from core.pcie_1762h_controller import Pcie_1762h
 from view.config_view import ConfigViewModel
 from core.db import engine
+from view.main_view import MainViewModel
 
 class App(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
 
         self._channels = [Channel(0), Channel(1), Channel(2)]
+        self._main_view_model = MainViewModel(self)
 
     @Property(list, constant=True)
     def channels(self):
         return self._channels
+
+    @Property(QObject, constant=True)
+    def mainViewModel(self):
+        return self._main_view_model
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
