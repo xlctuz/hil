@@ -70,6 +70,9 @@ class Pcie1762hProxy(QObject):
         self._do_channels = []
         self._di_channels = []
 
+        self._do_echos = [DioEchoProxy(Status.NA) for i in range(16)]
+        self._di_echos = [DioEchoProxy(Status.LOW) for i in range(16)]
+
         if self._pcie_data:
             # sort channels by index
             sorted_do = sorted(self._pcie_data.do_channels, key=lambda c: c.index)
@@ -79,8 +82,6 @@ class Pcie1762hProxy(QObject):
                 self._do_channels.append(DioChannelProxy(ch_data, DioChannelType.DO, self))
             for ch_data in sorted_di:
                 self._di_channels.append(DioChannelProxy(ch_data, DioChannelType.DI, self))
-        self._do_echos = [DioEchoProxy(Status.HIGH)]*16
-        self._di_echos = [DioEchoProxy(Status.LOW)]*16
 
     @Property('QVariant', constant=True)
     def doChannels(self):
@@ -146,7 +147,23 @@ class Pcie1762hProxy(QObject):
             result = self._pcie_data.run_test()
             print(f"DO test result: {result}")
 
+            for k in range(16):
+                i = k // 8
+                j = k % 8
+
+                status = Status.HIGH if (result[i] & (1 << j) ) != 0 else Status.LOW
+                self._do_echos[k].status = status
+                logger.info(f"do echo {k} changed to {status}")
+
             di_status = self._pcie_data.get_di()
             print(f"DI status: {di_status}")
+
+            for k in range(16):
+                i = k // 8
+                j = k % 8
+                status = Status.HIGH if (di_status[i] & (1 << j) ) != 0 else Status.LOW
+                self._di_echos[k].status = status
+                logger.info(f"di echo {k} changed to {status}")
+
         except Exception as e:
             print(f"Error testing PCIE-1762H: {e}")

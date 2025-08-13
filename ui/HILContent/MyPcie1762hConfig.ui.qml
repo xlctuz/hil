@@ -223,7 +223,7 @@ Pane {
                                     id: rectangle2
                                     Layout.fillWidth: false
                                     Layout.fillHeight: false
-                                    state: pcie1762h?.doEchos?.[index].status || "na"
+                                    state: pcie1762h?.doEchos?.[15-index].status || "na"
                                 }
                             }
                             Layout.fillWidth: true
@@ -264,7 +264,7 @@ Pane {
                                     id: rectangle1
                                     Layout.fillHeight: false
                                     Layout.fillWidth: false
-                                    state: pcie1762h?.diEchos?.[index].status || "na"
+                                    state: pcie1762h?.diEchos?.[15-index].status || "na"
                                 }
                             }
                             Layout.fillWidth: true

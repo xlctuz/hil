@@ -47,6 +47,7 @@ from sqlalchemy import Column, Integer, String, Float, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from .channel import Base
 import enum
+from common.logger import logger
 
 
 
@@ -113,7 +114,10 @@ class Pcie_1762h(Base):
                     port[i] |= 1 << j
                 elif c.status == Status.LOW:
                     port[i] &= ~(1 << j)
+
+            logger.info(f"port {port}")
             instantDoCtrl.writeAny(0, 2, port)
+            time.sleep(0.5)
             return instantDoCtrl.readAny(0, 2)[1]
         finally:
             if instantDoCtrl:
