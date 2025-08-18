@@ -11,6 +11,7 @@ Pane {
     z: 0
     property var powerSupply: null
     property alias btnTest: button1
+    property var configViewModel: backend?.configViewModel
 
     ColumnLayout {
         id: columnLayout

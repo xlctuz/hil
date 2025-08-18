@@ -28,6 +28,7 @@ class App(QObject):
 
         self._channels = [Channel(0), Channel(1), Channel(2)]
         self._main_view_model = MainViewModel(self)
+        self._config_view_model = ConfigViewModel(self)
 
     @Property(list, constant=True)
     def channels(self):
@@ -36,6 +37,11 @@ class App(QObject):
     @Property(QObject, constant=True)
     def mainViewModel(self):
         return self._main_view_model
+
+    @Property(QObject, constant=True)
+    def configViewModel(self):
+        return self._config_view_model
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -127,15 +133,12 @@ if __name__ == "__main__":
     # --- Database End ---
 
     backend = App()
-    config_view_model = ConfigViewModel()
 
     engine = QQmlApplicationEngine()
     # engine.addImportPath(os.path.join(os.path.dirname(__file__), "ui", "styles"))
     engine.addImportPath(os.path.join(os.path.dirname(__file__), "ui/"))
 
     engine.rootContext().setContextProperty("backend", backend)
-    engine.rootContext().setContextProperty("configViewModel", config_view_model)
-
 
     engine.load(os.path.join(os.path.dirname(__file__), "ui/HILContent/App.qml"))
 

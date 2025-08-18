@@ -8,6 +8,8 @@ ColumnLayout {
     property alias tabBarChannel: tabBarChannel
     property alias btnDeleteProject: btnDeleteProject
     property alias it6302Config: it6302Config
+
+    property var configViewModel: backend?.configViewModel
     RowLayout {
         id: rowLayout2
         width: 100
@@ -20,12 +22,21 @@ ColumnLayout {
             Layout.fillHeight: true
         }
 
+        Connections {
+            target: tabBarChannel
+            function onCurrentIndexChanged() {
+                console.log(`channel index changed ${target.currentIndex}`)
+                configViewModel.selectChannel(target.currentIndex)
+            }
+        }
+
         TabBar {
             id: tabBarChannel
             width: 240
             spacing: 10
             font.pointSize: 16
             font.bold: true
+
             TabButton {
                 id: tabButton5
                 text: qsTr("通道1")
@@ -127,6 +138,14 @@ ColumnLayout {
                             Layout.fillHeight: true
                             Layout.fillWidth: true
                         }
+
+                        Connections {
+                            target: btnDeleteProject
+                            function onClicked() {
+                                configViewModel.deleteCurrentProject()
+                            }
+                        }
+
                         Button {
                             id: btnDeleteProject
                             text: qsTr("删除")
@@ -223,4 +242,10 @@ ColumnLayout {
             }
         }
     }
+
+    Connections {
+        target: configView
+        Component.onCompleted: function() { configViewModel.selectChannel(0) }
+    }
+
 }

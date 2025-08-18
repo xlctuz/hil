@@ -20,24 +20,6 @@ Window {
 
     }
 
-    Connections {
-        target: mainScreen.configView
-        Component.onCompleted: function() {configViewModel.selectChannel(0) }
-    }
-    Connections {
-        target: mainScreen.configView.tabBarChannel
-        function onCurrentIndexChanged() {
-            console.log(`channel index changed ${target.currentIndex}`)
-            configViewModel.selectChannel(target.currentIndex)
-        }
-    }
-
-    Connections {
-        target: mainScreen.configView.btnDeleteProject
-        function onClicked() {
-            configViewModel.deleteCurrentProject()
-        }
-    }
 
     Dialog {
         id: errorDialog
@@ -54,7 +36,7 @@ Window {
     }
 
     Connections {
-        target: configViewModel
+        target: backend?.configViewModel
         function onPowerSupplyTestFailed(message) {
             errorMessageLabel.text = message
             errorDialog.open()

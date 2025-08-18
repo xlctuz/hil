@@ -42,6 +42,7 @@ class ProjectProxy(QObject):
 
 
 class ConfigViewModel(QObject):
+    currentChannelChanged = Signal(int)
     currentProjectChanged = Signal()
     powerSupplyTestFailed = Signal(str)
     powerSupplyDataUpdated = Signal(list, list, list) # voltage, current, power
@@ -72,6 +73,10 @@ class ConfigViewModel(QObject):
             print(f"Could not list VISA resources: {e}")
             return []
 
+    # @Property(int, notify=currentChannelChanged)
+    # def currentChannel(self):
+    #     return self._current_channel_index
+
     @Slot(str, int)
     def setPowerSupplyConfig(self, resource_name, baud_rate):
         if not self._current_project or not self._current_project.power_supply:
@@ -100,6 +105,8 @@ class ConfigViewModel(QObject):
     def selectChannel(self, index):
         self._current_channel_index = index
         print(f"Channel {index + 1} selected")
+        # self.currentChannelChanged.emit(self._current_channel_index)
+
         session = Session()
         try:
             # Assuming channel IDs are 1, 2, 3...

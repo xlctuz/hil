@@ -65,6 +65,7 @@ Rectangle {
                         function onClicked() {
                             if (mainStack.currentItem != mainView) {
                                 mainStack.pop()
+                                backend.mainViewModel.selectChannel(mainView.tabBarChannel.currentIndex)
                             }
                         }
                     }
@@ -81,6 +82,7 @@ Rectangle {
                         function onClicked() {
                             if (mainStack.currentItem != configView) {
                                 mainStack.push(configView)
+                                backend.configViewModel.selectChannel(configView.tabBarChannel.currentIndex)
                             }
                         }
                     }
@@ -121,7 +123,6 @@ Rectangle {
         MyMainView {
             id: mainView
             anchors.fill: parent
-            mainViewModel: backend?.mainViewModel
         }
 
         MyConfigView {

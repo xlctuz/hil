@@ -7,7 +7,8 @@ ColumnLayout {
     width: 1500
     height: 800
     visible: true
-    property var mainViewModel: null
+    property var mainViewModel: backend?.mainViewModel
+    property alias tabBarChannel: tabBar1
 
     RowLayout {
         id: rowLayout1
@@ -24,6 +25,15 @@ ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
         }
+
+        Connections {
+            target: tabBar1
+            function onCurrentIndexChanged() {
+                console.log(`channel index changed ${target.currentIndex}`)
+                mainViewModel.selectChannel(target.currentIndex)
+            }
+        }
+
         TabBar {
             id: tabBar1
             width: 240
@@ -48,6 +58,7 @@ ColumnLayout {
                 id: tabButton4
                 text: qsTr("通道3")
             }
+
         }
 
         Item {
