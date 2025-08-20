@@ -43,20 +43,25 @@ class ProjectProxy(QObject):
             # Apply power supply settings
             power_supply = self._project_data.power_supply
             if power_supply:
-                power_supply.open()
-                for channel in power_supply.channels:
-                    if channel.voltage is not None and channel.current is not None:
-                        power_supply.set_voltage_current(PSChannel(f"CH{channel.index+1}"), 
-                                                        channel.voltage, 
-                                                        channel.current)
-                        power_supply.set_on_off(IO.ON, PSChannel(f"CH{channel.index+1}"))
-                
-                # Start measurement timer
-                self._measurement_timer = QTimer()
-                self._measurement_timer.timeout.connect(self._updateMeasurements)
-                self._measurement_timer.start(1000)  # Update every 1 second
+                try:
+                    power_supply.open()
+                    for channel in power_supply.channels:
+                        if channel.voltage is not None and channel.current is not None:
+                            power_supply.set_voltage_current(PSChannel(f"CH{channel.index+1}"), 
+                                                            channel.voltage, 
+                                                            channel.current)
+                            power_supply.set_on_off(IO.ON, PSChannel(f"CH{channel.index+1}"))
+                    
+                    # Start measurement timer
+                    self._measurement_timer = QTimer()
+                    self._measurement_timer.timeout.connect(self._updateMeasurements)
+                    self._measurement_timer.start(1000)  # Update every 1 second
 
-            self._is_started = True
+                    self._is_started = True
+                except Exception as e:
+                    logger.error(f"Error starting power supply: {str(e)}")
+                    self._is_started = False
+                    return
         finally:
             session.close()
 
@@ -68,13 +73,17 @@ class ProjectProxy(QObject):
         try:
             for channel in power_supply.channels:
                 ps_channel = PSChannel(f"CH{channel.index+1}")
-                voltage = float(power_supply.measure_voltage(ps_channel))
-                current = float(power_supply.measure_current(ps_channel))
-                power = float(power_supply.measure_power(ps_channel))
-                
-                # Update proxy channel measurements
-                proxy_channel = self._current_project_proxy._power_supply._channels[channel.index]
-                proxy_channel.updateMeasurements(voltage, current, power)
+                try:
+                    voltage = float(power_supply.measure_voltage(ps_channel))
+                    current = float(power_supply.measure_current(ps_channel))
+                    power = float(power_supply.measure_power(ps_channel))
+                    
+                    # Update proxy channel measurements
+                    proxy_channel = self._current_project_proxy._power_supply._channels[channel.index]
+                    proxy_channel.updateMeasurements(voltage, current, power)
+                except Exception as e:
+                    logger.error(f"Error measuring channel {channel.index+1}: {str(e)}")
+                    continue
         except Exception as e:
             logger.error(f"Error updating measurements: {str(e)}")
 
