@@ -13,6 +13,14 @@ class PowerSupplyChannelProxy(QObject):
     def current(self):
         return self._channel_data.current if self._channel_data and self._channel_data.current is not None else None
 
+    @Property(int, constant=True)
+    def index(self):
+        return self._channel_data.index if self._channel_data else -1
+
+    @Property(bool, constant=True)
+    def isConfigured(self):
+        return self._channel_data and (self._channel_data.voltage is not None or self._channel_data.current is not None)
+
 
 class PowerSupplyProxy(QObject):
     resourceNameChanged = Signal()
@@ -50,5 +58,14 @@ class PowerSupplyProxy(QObject):
     @Property(QObject, constant=True)
     def ch3(self):
         return self._channels[2]
+
+    @Property('QVariant', constant=True)
+    def configuredChannels(self):
+        if not self._power_supply_data:
+            return []
+        return [ch for ch in self._channels if ch.isConfigured]
+
+
+
 
 

@@ -66,6 +66,7 @@ Pane {
 
             MyMainPowerSupply {
                 id: powerSupply
+                channels: backend?.mainViewModel?.currentProject?.powerSupply?.configuredChannels
             }
             MyMainDIO {
                 id: dio
@@ -73,6 +74,3 @@ Pane {
         }
     }
 }
-
-
-
