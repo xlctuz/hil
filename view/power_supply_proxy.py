@@ -4,6 +4,7 @@ class PowerSupplyChannelProxy(QObject):
     voltageChanged = Signal(float)
     currentChanged = Signal(float)
     powerChanged = Signal(float)
+    chartDataChanged = Signal()
 
     def __init__(self, channel_data, parent=None):
         super().__init__(parent)
@@ -11,6 +12,10 @@ class PowerSupplyChannelProxy(QObject):
         self._measured_voltage = 0.0
         self._measured_current = 0.0
         self._measured_power = 0.0
+        self._voltage_data = []
+        self._current_data = []
+        self._power_data = []
+        self._max_data_points = 60  # 保留最近60个数据点
 
     @Property(float, notify=voltageChanged)
     def voltage(self):
@@ -44,9 +49,34 @@ class PowerSupplyChannelProxy(QObject):
         self._measured_voltage = voltage
         self._measured_current = current
         self._measured_power = power
+        
+        # 更新数据点
+        self._voltage_data.append(voltage)
+        self._current_data.append(current)
+        self._power_data.append(power)
+        
+        # 保持数据长度
+        if len(self._voltage_data) > self._max_data_points:
+            self._voltage_data.pop(0)
+            self._current_data.pop(0)
+            self._power_data.pop(0)
+            
         self.voltageChanged.emit(voltage)
         self.currentChanged.emit(current)
         self.powerChanged.emit(power)
+        self.chartDataChanged.emit()
+
+    @Property('QVariant', notify=chartDataChanged)
+    def voltageData(self):
+        return self._voltage_data
+
+    @Property('QVariant', notify=chartDataChanged)
+    def currentData(self):
+        return self._current_data
+
+    @Property('QVariant', notify=chartDataChanged)
+    def powerData(self):
+        return self._power_data
 
 
 class PowerSupplyProxy(QObject):
