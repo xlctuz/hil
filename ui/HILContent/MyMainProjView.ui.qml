@@ -48,8 +48,25 @@ Pane {
             Button {
                 id: button
                 text: qsTr("启用")
+                checked: false
+                checkable: true
+                state: ""
                 enabled: currentProj
                 Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+            }
+
+            Connections {
+                target: button
+                function onClicked() {
+                    if (!currentProj.is_started) {
+                        currentProj.start()
+                        target.checked = true
+                    }
+                    else {
+                        currentProj.stop()
+                        target.checked = false
+                    }
+                }
             }
         }
 

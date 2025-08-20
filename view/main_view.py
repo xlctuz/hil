@@ -17,6 +17,7 @@ class ProjectProxy(QObject):
         self._project_data = project_data
         self._power_supply = PowerSupplyProxy(project_data.power_supply if project_data else None, self)
         self._pcie_1762h = Pcie1762hProxy(project_data.pcie_1762h if project_data else None, self)
+        self._is_started = False
 
     @Property('QVariant', constant=True)
     def name(self):
@@ -29,6 +30,21 @@ class ProjectProxy(QObject):
     @Property(QObject, constant=True)
     def pcie1762h(self):
         return self._pcie_1762h
+
+    @Property(bool, constant=True)
+    def is_started(self):
+        return self._is_started
+
+    @Slot()
+    def start(self):
+        logger.info(f"start current project {self._project_data.name}")
+        self._is_started = True
+
+    @Slot()
+    def stop(self):
+        logger.info(f"stop current project {self._project_data.name}")
+        self._is_started = False
+
 
 class MainViewModel(QObject):
     currentProjectChanged = Signal()

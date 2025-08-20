@@ -2,3 +2,5 @@
 *.pyc
 /doc/Advantech/
 .aider*
+*qtds
+/project.db

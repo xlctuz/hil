@@ -23,6 +23,7 @@ Pane {
                 Layout.fillWidth: true
                 x: 0
                 y: 0
+                title: qsTr(`通道${modelData.index+1}`)
             }
         }
     }
