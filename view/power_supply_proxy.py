@@ -1,17 +1,36 @@
 from PySide6.QtCore import QObject, Property, Slot, QAbstractListModel, QModelIndex, Qt, Signal, QThread, QTimer
 
 class PowerSupplyChannelProxy(QObject):
+    voltageChanged = Signal(float)
+    currentChanged = Signal(float)
+    powerChanged = Signal(float)
+
     def __init__(self, channel_data, parent=None):
         super().__init__(parent)
         self._channel_data = channel_data
+        self._measured_voltage = 0.0
+        self._measured_current = 0.0
+        self._measured_power = 0.0
 
-    @Property('QVariant', constant=True)
+    @Property(float, notify=voltageChanged)
     def voltage(self):
-        return self._channel_data.voltage if self._channel_data and self._channel_data.voltage is not None else None
+        return self._channel_data.voltage if self._channel_data and self._channel_data.voltage is not None else 0.0
 
-    @Property('QVariant', constant=True)
+    @Property(float, notify=currentChanged)
     def current(self):
-        return self._channel_data.current if self._channel_data and self._channel_data.current is not None else None
+        return self._channel_data.current if self._channel_data and self._channel_data.current is not None else 0.0
+
+    @Property(float, notify=powerChanged)
+    def power(self):
+        return self._measured_power
+
+    @Property(float, notify=voltageChanged)
+    def measuredVoltage(self):
+        return self._measured_voltage
+
+    @Property(float, notify=currentChanged)
+    def measuredCurrent(self):
+        return self._measured_current
 
     @Property(int, constant=True)
     def index(self):
@@ -20,6 +39,14 @@ class PowerSupplyChannelProxy(QObject):
     @Property(bool, constant=True)
     def isConfigured(self):
         return self._channel_data and (self._channel_data.voltage is not None or self._channel_data.current is not None)
+
+    def updateMeasurements(self, voltage, current, power):
+        self._measured_voltage = voltage
+        self._measured_current = current
+        self._measured_power = power
+        self.voltageChanged.emit(voltage)
+        self.currentChanged.emit(current)
+        self.powerChanged.emit(power)
 
 
 class PowerSupplyProxy(QObject):

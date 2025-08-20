@@ -38,11 +38,63 @@ class ProjectProxy(QObject):
     @Slot()
     def start(self):
         logger.info(f"start current project {self._project_data.name}")
-        self._is_started = True
+        session = Session()
+        try:
+            # Apply power supply settings
+            power_supply = self._project_data.power_supply
+            if power_supply:
+                power_supply.open()
+                for channel in power_supply.channels:
+                    if channel.voltage is not None and channel.current is not None:
+                        power_supply.set_voltage_current(PSChannel(f"CH{channel.index+1}"), 
+                                                        channel.voltage, 
+                                                        channel.current)
+                        power_supply.set_on_off(IO.ON, PSChannel(f"CH{channel.index+1}"))
+                
+                # Start measurement timer
+                self._measurement_timer = QTimer()
+                self._measurement_timer.timeout.connect(self._updateMeasurements)
+                self._measurement_timer.start(1000)  # Update every 1 second
+
+            self._is_started = True
+        finally:
+            session.close()
+
+    def _updateMeasurements(self):
+        if not self._project_data or not self._project_data.power_supply:
+            return
+            
+        power_supply = self._project_data.power_supply
+        try:
+            for channel in power_supply.channels:
+                ps_channel = PSChannel(f"CH{channel.index+1}")
+                voltage = float(power_supply.measure_voltage(ps_channel))
+                current = float(power_supply.measure_current(ps_channel))
+                power = float(power_supply.measure_power(ps_channel))
+                
+                # Update proxy channel measurements
+                proxy_channel = self._current_project_proxy._power_supply._channels[channel.index]
+                proxy_channel.updateMeasurements(voltage, current, power)
+        except Exception as e:
+            logger.error(f"Error updating measurements: {str(e)}")
 
     @Slot()
     def stop(self):
         logger.info(f"stop current project {self._project_data.name}")
+        if hasattr(self, '_measurement_timer'):
+            self._measurement_timer.stop()
+            del self._measurement_timer
+            
+        if self._project_data and self._project_data.power_supply:
+            try:
+                # Turn off all channels
+                power_supply = self._project_data.power_supply
+                for channel in power_supply.channels:
+                    power_supply.set_on_off(IO.OFF, PSChannel(f"CH{channel.index+1}"))
+                power_supply.close()
+            except Exception as e:
+                logger.error(f"Error stopping power supply: {str(e)}")
+                
         self._is_started = False
 
 
