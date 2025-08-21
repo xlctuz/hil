@@ -89,6 +89,18 @@ Rectangle {
                     /*     } */
                     /* } */
                 }
+
+                Connections {
+                    target: tabBar
+                    function onCurrentIndexChanged() {
+                        if (tabBar.currentIndex == 0) {
+                            backend.mainViewModel.selectChannel(mainView.tabBarChannel.currentIndex)
+                        }
+                        else {
+                            backend.configViewModel.selectChannel(configView.tabBarChannel.currentIndex)
+                        }
+                    }
+                }
             }
 
             Item {

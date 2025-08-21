@@ -1,13 +1,20 @@
-from base.models.project import Project, Project
-from base.models.channel import Channel, Channel
+from base.models.project import Project
+from base.models.channel import Channel
 from base.database import Session, engine
-from base.models.channel import Base as ChannelBase, Channel
-from base.models.project import Base as ProjectBase, Project
-from base.models.power_supply import Base as PowerSupplyBase, PowerSupply, PowerSupplyChannel
+from base.models.power_supply import PowerSupply, PowerSupplyChannel
 from base.models.pcie_1762h import Base as Pcie1762hBase, Pcie1762h, Pcie1762hDoChannel, Pcie1762hDiChannel, Status
 from base.logger import logger
 from sqlalchemy.orm import joinedload
 from typing import List
+
+
+class ChannelRepository:
+    def get_channel_from_index(self, channel_index: int) -> Channel:
+        session = Session()
+        try:
+            return session.query(Channel).filter(Channel.index == channel_index).first()
+        finally:
+            session.close()
 
 
 class ProjectRepository:
@@ -52,6 +59,7 @@ class ProjectRepository:
 
             session.commit()
         except Exception as e:
+            logger.error(f"failed save project {e}")
             session.rollback()
             raise e
         finally:

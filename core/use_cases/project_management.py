@@ -1,4 +1,4 @@
-from base.repositories import ProjectRepository
+from base.repositories import ProjectRepository, ChannelRepository
 from base.models.project import Project
 from base.models.power_supply import PowerSupply
 from base.models.pcie_1762h import Pcie1762h
@@ -7,8 +7,9 @@ from typing import List
 
 
 class ProjectManagement:
-    def __init__(self, project_repository: ProjectRepository):
+    def __init__(self, project_repository: ProjectRepository, channel_repository: ChannelRepository):
         self.project_repository = project_repository
+        self.channel_repository = channel_repository
 
     def add_project(self, name: str, channel_index: int) -> Project:
         # Create a new project
@@ -23,7 +24,7 @@ class ProjectManagement:
         project.pcie_1762h = pcie_1762h
 
         # Set the channel for the project
-        project.channel = Channel(index=channel_index)
+        project.channel = self.channel_repository.get_channel_from_index(channel_index)
 
         # Save the project
         self.project_repository.save_project(project)
