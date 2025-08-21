@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 
-class ChannelORM(Base):
+class Channel(Base):
     __tablename__ = 'channels'
 
     id = Column(Integer, primary_key=True)
@@ -20,12 +20,3 @@ class ChannelORM(Base):
         self.name = name
 
 
-# Domain model class
-class Channel:
-    def __init__(self, index, name=""):
-        self.index = index
-        self.name = name
-
-
-# For backward compatibility
-Channel = ChannelORM

@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from .channel import Base
-from .power_supply import PowerSupplyORM
-from .pcie_1762h import Pcie1762hORM
+from .power_supply import PowerSupply
+from .pcie_1762h import Pcie1762h
 
 
 class ProjectORM(Base):
@@ -13,10 +13,10 @@ class ProjectORM(Base):
 
     # many-to-one: a project belongs to one channel
     channel_id = Column(Integer, ForeignKey('channels.id'))
-    channel = relationship("ChannelORM", back_populates="projects")
+    channel = relationship("Channel", back_populates="projects")
 
-    power_supply = relationship("PowerSupplyORM", uselist=False, back_populates="project")
-    pcie_1762h = relationship("Pcie1762hORM", uselist=False, back_populates="project")
+    power_supply = relationship("PowerSupply", uselist=False, back_populates="project")
+    pcie_1762h = relationship("Pcie1762h", uselist=False, back_populates="project")
 
     def __init__(self, name=""):
         self.name = name

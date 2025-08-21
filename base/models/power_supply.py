@@ -27,14 +27,7 @@ class Channel(StrEnum):
     ALL = "ALL"
 
 
-class PowerSupplyChannel:
-    def __init__(self, index):
-        self.index = index
-        self.voltage = None
-        self.current = None
-
-
-class PowerSupplyChannelORM(Base):
+class PowerSupplyChannel(Base):
     __tablename__ = 'power_supply_channels'
 
     id = Column(Integer, primary_key=True)
@@ -43,10 +36,10 @@ class PowerSupplyChannelORM(Base):
     current = Column(Float)
 
     power_supply_id = Column(Integer, ForeignKey('power_supplies.id'))
-    power_supply = relationship("PowerSupplyORM", back_populates="channels")
+    power_supply = relationship("PowerSupply", back_populates="channels")
 
 
-class PowerSupplyORM(Base):
+class PowerSupply(Base):
     __tablename__ = 'power_supplies'
 
     id = Column(Integer, primary_key=True)
@@ -56,30 +49,18 @@ class PowerSupplyORM(Base):
     project_id = Column(Integer, ForeignKey('projects.id'))
     project = relationship("ProjectORM", back_populates="power_supply", uselist=False)
 
-    channels = relationship("PowerSupplyChannelORM", back_populates="power_supply", cascade="all, delete-orphan")
+    channels = relationship("PowerSupplyChannel", back_populates="power_supply", cascade="all, delete-orphan")
 
     def __init__(self, resource_name="", baud_rate=9600, **kwargs):
         # Initialize domain model attributes
         self.resource_name = resource_name
         self.baud_rate = baud_rate
         self.instrument = None
-        
+
         # Initialize channels if not already done
         if not self.channels:
-            self.channels = [PowerSupplyChannelORM(index=0),
-                             PowerSupplyChannelORM(index=1),
-                             PowerSupplyChannelORM(index=2)]
-        
+            self.channels = [PowerSupplyChannel(index=0),
+                             PowerSupplyChannel(index=1),
+                             PowerSupplyChannel(index=2)]
+
         super().__init__(**kwargs)
-
-
-# For backward compatibility, we can create an alias
-PowerSupply = PowerSupplyORM
-PowerSupplyChannel = PowerSupplyChannelORM
-
-
-@contextmanager
-def open_power_supply(power_supply: PowerSupplyORM):
-    # This context manager is kept for backward compatibility
-    # but should not be used in new code
-    yield power_supply

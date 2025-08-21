@@ -23,17 +23,17 @@ class Pcie1762hDoChannel:
         self.status = Status.NA
 
 
-class Pcie1762hDiChannelORM(Base):
+class Pcie1762hDiChannel(Base):
     __tablename__ = 'pcie_1762h_di_channel'
     id = Column(Integer, primary_key=True)
     index = Column(Integer)
     name = Column(String)
 
     pcie_1762h_id = Column(Integer, ForeignKey('pcie_1762h.id'))
-    pcie_1762h = relationship("Pcie1762hORM", back_populates="di_channels")
+    pcie_1762h = relationship("Pcie1762h", back_populates="di_channels")
 
 
-class Pcie1762hDoChannelORM(Base):
+class Pcie1762hDoChannel(Base):
     __tablename__ = 'pcie_1762h_do_channel'
     id = Column(Integer, primary_key=True)
     index = Column(Integer)
@@ -41,28 +41,23 @@ class Pcie1762hDoChannelORM(Base):
     status = Column(SQLEnum(Status), default=Status.NA)
 
     pcie_1762h_id = Column(Integer, ForeignKey('pcie_1762h.id'))
-    pcie_1762h = relationship("Pcie1762hORM", back_populates="do_channels")
+    pcie_1762h = relationship("Pcie1762h", back_populates="do_channels")
 
 
-class Pcie1762hORM(Base):
+class Pcie1762h(Base):
     __tablename__ = 'pcie_1762h'
     id = Column(Integer, primary_key=True)
 
     project_id = Column(Integer, ForeignKey('projects.id'))
     project = relationship("ProjectORM", back_populates="pcie_1762h", uselist=False)
-    do_channels = relationship("Pcie1762hDoChannelORM", back_populates="pcie_1762h", cascade="all, delete-orphan")
-    di_channels = relationship("Pcie1762hDiChannelORM", back_populates="pcie_1762h", cascade="all, delete-orphan")
+    do_channels = relationship("Pcie1762hDoChannel", back_populates="pcie_1762h", cascade="all, delete-orphan")
+    di_channels = relationship("Pcie1762hDiChannel", back_populates="pcie_1762h", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         # Initialize domain model attributes
         if not self.do_channels:
-            self.do_channels = [Pcie1762hDoChannelORM(index=i) for i in range(16)]
+            self.do_channels = [Pcie1762hDoChannel(index=i) for i in range(16)]
         if not self.di_channels:
-            self.di_channels = [Pcie1762hDiChannelORM(index=i) for i in range(16)]
+            self.di_channels = [Pcie1762hDiChannel(index=i) for i in range(16)]
         super().__init__(**kwargs)
 
-
-# For backward compatibility, we can create an alias
-Pcie1762h = Pcie1762hORM
-Pcie1762hDiChannel = Pcie1762hDiChannelORM
-Pcie1762hDoChannel = Pcie1762hDoChannelORM

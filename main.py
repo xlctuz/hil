@@ -16,10 +16,10 @@ from sqlalchemy.orm import sessionmaker
 # Import core models for database initialization
 # We need to import the ORM models from their new location in base
 # These are used only for database initialization
-from base.models.channel import Base as ChannelBase, ChannelORM
+from base.models.channel import Base as ChannelBase, Channel
 from base.models.project import Base as ProjectBase, ProjectORM
-from base.models.power_supply import Base as PowerSupplyBase, PowerSupplyORM
-from base.models.pcie_1762h import Base as Pcie1762hBase, Pcie1762hORM
+from base.models.power_supply import Base as PowerSupplyBase, PowerSupply
+from base.models.pcie_1762h import Base as Pcie1762hBase, Pcie1762h
 
 # Import base components
 from base.database import engine, Session
