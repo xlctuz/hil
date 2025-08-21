@@ -8,37 +8,94 @@ from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtQml import QQmlDebuggingEnabler
 QQmlDebuggingEnabler.enableDebugging(True)
 from PySide6.QtCharts import QChartView, QChart, QLineSeries
-import ui.resources_rc
+import qml.resources_rc
 from common.logger import logger
-from PySide6.QtCore import QObject, Property
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from core.channel import Base, Channel
-from core.project import Project
-from core.power_supply_it6302 import Power_supply_it6302
-from core.pcie_1762h_controller import Pcie_1762h
-from view.config_view import ConfigViewModel
-from core.db import engine
-from view.main_view import MainViewModel
+# Import core models for database initialization
+# We need to import the ORM models from their new location in data_access
+# These are used only for database initialization
+from data_access.persistence.models.channel import Base as ChannelBase, Channel as ChannelORM
+from data_access.persistence.models.project import Base as ProjectBase, Project as ProjectORM
+from data_access.persistence.models.power_supply_it6302 import Base as PowerSupplyBase, Power_supply_it6302 as PowerSupplyORM
+from data_access.persistence.models.pcie_1762h_controller import Base as Pcie1762hBase, Pcie_1762h as Pcie1762hORM
 
-class App(QObject):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+# Import data access components
+from data_access.persistence.database import engine, Session
+from data_access.persistence.repositories import ProjectRepository
+from data_access.hardware.power_supply_adapter import PowerSupplyAdapter
+from data_access.hardware.pcie_1762h_adapter import Pcie1762hAdapter
+from data_access.hardware.power_supply_polling_service_adapter import PowerSupplyPollingServiceAdapter
 
-        self._channels = [Channel(0), Channel(1), Channel(2)]
-        self._main_view_model = MainViewModel(self)
-        self._config_view_model = ConfigViewModel(self)
+# Import application use cases
+from business.application.use_cases.select_project import SelectProject
+from business.application.use_cases.configure_power_supply import ConfigurePowerSupply
+from business.application.use_cases.add_project import AddProject
+from business.application.use_cases.delete_project import DeleteProject
+from business.application.use_cases.set_power_supply_voltage import SetPowerSupplyVoltage
+from business.application.use_cases.set_power_supply_current import SetPowerSupplyCurrent
+from business.application.use_cases.reset_power_supply_settings import ResetPowerSupplySettings
+from business.application.use_cases.toggle_power_supply_test import TogglePowerSupplyTest
 
-    @Property(list, constant=True)
-    def channels(self):
-        return self._channels
+# Import UI components
+from presentation.ui.main_view_model import MainViewModel
+from presentation.ui.config_view_model import ConfigViewModel
+from presentation.ui.backend_adapter import BackendAdapter
 
-    @Property(QObject, constant=True)
+
+class App:
+    def __init__(self):
+        # Initialize infrastructure components
+        self.project_repository = ProjectRepository()
+        self.power_supply_adapter = PowerSupplyAdapter()
+        self.pcie_1762h_adapter = Pcie1762hAdapter()
+        self.power_supply_polling_service = PowerSupplyPollingServiceAdapter()
+        
+        # Initialize use cases
+        self.select_project_use_case = SelectProject(self.project_repository)
+        self.configure_power_supply_use_case = ConfigurePowerSupply(self.power_supply_adapter)
+        self.add_project_use_case = AddProject(self.project_repository)
+        self.delete_project_use_case = DeleteProject(self.project_repository)
+        self.set_power_supply_voltage_use_case = SetPowerSupplyVoltage()
+        self.set_power_supply_current_use_case = SetPowerSupplyCurrent()
+        self.reset_power_supply_settings_use_case = ResetPowerSupplySettings()
+        self.toggle_power_supply_test_use_case = TogglePowerSupplyTest(
+            self.power_supply_adapter,
+            self.power_supply_polling_service
+        )
+        
+        # Initialize view models
+        self._main_view_model = MainViewModel(self.select_project_use_case)
+        self._config_view_model = ConfigViewModel(
+            self.select_project_use_case,
+            self.configure_power_supply_use_case,
+            self.add_project_use_case,
+            self.delete_project_use_case,
+            self.set_power_supply_voltage_use_case,
+            self.set_power_supply_current_use_case,
+            self.reset_power_supply_settings_use_case,
+            self.toggle_power_supply_test_use_case
+        )
+        
+        # Initialize database
+        self._initialize_database()
+
+    def _initialize_database(self):
+        # Create tables
+        ChannelBase.metadata.create_all(engine)
+        ProjectBase.metadata.create_all(engine)
+        PowerSupplyBase.metadata.create_all(engine)
+        Pcie1762hBase.metadata.create_all(engine)
+        
+        # Create channels if they don't exist
+        self.project_repository.create_channels()
+
+    @property
     def mainViewModel(self):
         return self._main_view_model
 
-    @Property(QObject, constant=True)
+    @property
     def configViewModel(self):
         return self._config_view_model
 
@@ -48,101 +105,23 @@ if __name__ == "__main__":
 
     logger.info("main")
 
-    # Base.metadata.drop_all(engine) # For clean test runs
-    Base.metadata.create_all(engine)
-    Session = sessionmaker(bind=engine)
-    session = Session()
+    # Create the application components
+    app_instance = App()
+    
+    # Create the QML backend adapter
+    backend = BackendAdapter(
+        app_instance.mainViewModel,
+        app_instance.configViewModel
+    )
 
-    # Create channels if they don't exist
-    if session.query(Channel).count() == 0:
-        logger.info("Creating channels...")
-        channels = [
-            Channel(index=0, name="通道1"),
-            Channel(index=1, name="通道2"),
-            Channel(index=2, name="通道3")
-        ]
-        session.add_all(channels)
-        session.commit()
-    else:
-        channels = session.query(Channel).order_by(Channel.id).all()
+    appEngine = QQmlApplicationEngine()
+    appEngine.addImportPath(os.path.join(os.path.dirname(__file__), "qml/"))
 
+    appEngine.rootContext().setContextProperty("backend", backend)
 
-    # Create a sample project for each channel
-    # TODO Add Pcie_1762h data
-    if session.query(Project).count() == 0:
-        logger.info("Creating and saving new projects...")
+    appEngine.load(os.path.join(os.path.dirname(__file__), "qml/HILContent/App.qml"))
 
-        # Project 1 for Channel 1
-        project1 = Project(name="项目A")
-        ps1 = Power_supply_it6302(resource_name="ASRL3::INSTR", baud_rate=9600)
-        ps1.channels[0].voltage = 5.0
-        ps1.channels[0].current = 1.0
-        ps1.channels[1].voltage = 15.0
-        ps1.channels[1].current = 1.1
-        ps1.channels[2].voltage = 3.3
-        ps1.channels[2].current = 1.2
-        project1.power_supply = ps1
-
-        # Add PCIe-1762H controller (通道初始化已在类内部实现)
-        pcie1 = Pcie_1762h()
-        project1.pcie_1762h = pcie1
-
-        project1.channel = channels[0]
-
-        session.add(project1)
-
-        # Project 2 for Channel 1
-        project2 = Project(name="项目B")
-        project2.channel = channels[0]
-        ps2 = Power_supply_it6302(resource_name="ASRL3::INSTR", baud_rate=9600)
-        ps2.channels[0].voltage = 3.0
-        ps2.channels[0].current = 2.0
-        ps2.channels[1].voltage = 13.0
-        ps2.channels[1].current = 2.1
-        ps2.channels[2].voltage = 4.3
-        ps2.channels[2].current = 2.2
-        project2.power_supply = ps2
-
-        # Add PCIe-1762H controller (通道初始化已在类内部实现)
-        pcie2 = Pcie_1762h()
-        project2.pcie_1762h = pcie2
-        session.add(project2)
-
-        # Project 3 for Channel 2
-        project3 = Project(name="项目C")
-        ps3 = Power_supply_it6302(resource_name="ASRL3::INSTR", baud_rate=9600)
-        ps3.channels[0].voltage = 2.0
-        ps3.channels[0].current = 2.0
-        ps3.channels[1].voltage = 12.0
-        ps3.channels[1].current = 2.0
-        ps3.channels[2].voltage = 4.3
-        ps3.channels[2].current = 2.2
-        project3.power_supply = ps3
-
-        # Add PCIe-1762H controller (通道初始化已在类内部实现)
-        pcie3 = Pcie_1762h()
-        project3.pcie_1762h = pcie3
-
-        project3.channel = channels[1]
-        session.add(project3)
-
-        session.commit()
-        logger.info("Sample projects created.")
-
-    session.close()
-    # --- Database End ---
-
-    backend = App()
-
-    engine = QQmlApplicationEngine()
-    # engine.addImportPath(os.path.join(os.path.dirname(__file__), "ui", "styles"))
-    engine.addImportPath(os.path.join(os.path.dirname(__file__), "ui/"))
-
-    engine.rootContext().setContextProperty("backend", backend)
-
-    engine.load(os.path.join(os.path.dirname(__file__), "ui/HILContent/App.qml"))
-
-    if not engine.rootObjects():
+    if not appEngine.rootObjects():
         sys.exit(-1)
 
     sys.exit(app.exec())
