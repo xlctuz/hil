@@ -1,4 +1,4 @@
-from base.models.power_supply import PowerSupply, IO, Channel
+from base.models.power_supply import PowerSupply, IO, Channel, PowerSupplyError, ParameterError
 import pyvisa
 from contextlib import contextmanager
 from .visa_resource_manager import rm
@@ -6,13 +6,6 @@ from .visa_resource_manager import rm
 
 # These command classes are moved from the original power_supply_it6302.py
 # They are kept here as they are implementation details of the hardware adapter
-class PowerSupplyError(Exception):
-    pass
-
-
-class ParameterError(PowerSupplyError):
-    def __init__(self, message):
-        super().__init__(message)
 
 
 def _next(self):
