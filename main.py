@@ -23,10 +23,10 @@ from base.models.pcie_1762h import Pcie1762h
 
 # Import base components
 from base.database import engine, Session
-from base.repositories import ProjectRepository, ChannelRepository
 from base.devices.power_supply_adapter import PowerSupplyAdapter
 from base.devices.pcie_1762h_adapter import Pcie1762hAdapter
 from base.devices.power_supply_polling_service_adapter import PowerSupplyPollingServiceAdapter
+from base.repositories import repository
 
 # Import core use cases
 from core.use_cases.project_management import ProjectManagement
@@ -41,21 +41,13 @@ from ui.backend_adapter import BackendAdapter
 class App:
     def __init__(self):
         # Initialize infrastructure components
-        self.project_repository = ProjectRepository()
-        self.channel_repository = ChannelRepository()
         self.power_supply_adapter = PowerSupplyAdapter()
         self.pcie_1762h_adapter = Pcie1762hAdapter()
         self.power_supply_polling_service = PowerSupplyPollingServiceAdapter()
 
-        # Initialize use cases
-        self.project_management_use_case = ProjectManagement(self.project_repository, self.channel_repository)
-        self.power_supply_configuration_use_case = PowerSupplyConfiguration()
-
         # Initialize view models
-        self._main_view_model = MainViewModel(self.project_management_use_case)
+        self._main_view_model = MainViewModel()
         self._config_view_model = ConfigViewModel(
-            self.project_management_use_case,
-            self.power_supply_configuration_use_case,
             self.power_supply_adapter,
             self.power_supply_polling_service
         )
@@ -68,7 +60,7 @@ class App:
         Base.metadata.create_all(engine)
 
         # Create channels if they don't exist
-        self.project_repository.create_channels()
+        repository.project.create_channels()
 
     @property
     def mainViewModel(self):

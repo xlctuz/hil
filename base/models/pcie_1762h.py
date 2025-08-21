@@ -5,9 +5,9 @@ from .channel import Base
 
 
 class Status(Enum):
-    HIGH = "high"
-    LOW = "low"
-    NA = "na"
+    HIGH = "HIGH"
+    LOW = "LOW"
+    NA = "NA"
 
 
 class Pcie1762hDiChannel(Base):

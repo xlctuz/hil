@@ -1,4 +1,4 @@
-from PySide6.QtCore import QObject, Property
+from PySide6.QtCore import QObject, Property, Slot
 from ui.main_view_model import MainViewModel
 from ui.config_view_model import ConfigViewModel
 
@@ -16,3 +16,4 @@ class BackendAdapter(QObject):
     @Property(QObject, constant=True)
     def configViewModel(self):
         return self._config_view_model
+

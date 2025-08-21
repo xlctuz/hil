@@ -94,3 +94,30 @@ class ProjectRepository:
             return channels
         finally:
             session.close()
+
+
+class Pcie1762hRepository:
+    def save(self, pcie_1762h):
+        session = Session()
+        try:
+            if not hasattr(pcie_1762h, 'id') or not pcie_1762h.id:
+                logger.error("has no id in pcie1726h")
+                return
+
+            session.merge(pcie_1762h)
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+
+class Repository:
+    def __init__(self):
+        self.channel = ChannelRepository()
+        self.project = ProjectRepository()
+        self.pcie_1762h = Pcie1762hRepository()
+
+
+repository = Repository()

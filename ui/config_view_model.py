@@ -12,9 +12,9 @@ from base.models.pcie_1762h import Pcie1762h
 from base.devices.visa_resource_manager import rm
 from ui.project_model import ProjectModel
 from ui.project_proxy import ProjectProxy
-from core.use_cases.project_management import ProjectManagement
-from core.use_cases.power_supply_management import PowerSupplyConfiguration
+from core.use_cases import use_cases
 
+project_management = use_cases.project_management
 
 class ConfigViewModel(QObject):
     currentChannelChanged = Signal(int)
@@ -22,13 +22,9 @@ class ConfigViewModel(QObject):
     powerSupplyTestFailed = Signal(str)
     powerSupplyDataUpdated = Signal(list, list, list) # voltage, current, power
 
-    def __init__(self, project_management_use_case: ProjectManagement,
-                 power_supply_configuration_use_case: PowerSupplyConfiguration,
-                 power_supply_adapter, power_supply_polling_service,
+    def __init__(self, power_supply_adapter, power_supply_polling_service,
                  parent=None):
         super().__init__(parent)
-        self.project_management_use_case = project_management_use_case
-        self.power_supply_configuration_use_case = power_supply_configuration_use_case
         self.power_supply_adapter = power_supply_adapter
         self.power_supply_polling_service = power_supply_polling_service
 
@@ -65,7 +61,7 @@ class ConfigViewModel(QObject):
             baud_rate
         )
 
-        self.project_management_use_case.save_project(self._current_project)
+        project_management.save_project(self._current_project)
 
         self._current_project_proxy.powerSupply.resourceNameChanged.emit()
         self._current_project_proxy.powerSupply.baudRateChanged.emit()
@@ -76,7 +72,7 @@ class ConfigViewModel(QObject):
         logger.info(f"Channel {index + 1} selected")
 
         # Use the use case to get projects for the selected channel
-        projects = self.project_management_use_case.select_project(index)
+        projects = project_management.select_project(index)
         self._project_model.set_projects(projects)
 
         self._current_project = None
@@ -93,7 +89,7 @@ class ConfigViewModel(QObject):
         logger.info(f"Adding project {name} to channel {self._current_channel_index + 1}")
 
         # Use the use case to add a new project
-        self.project_management_use_case.add_project(name, self._current_channel_index)
+        project_management.add_project(name, self._current_channel_index)
 
         # Refresh the project list
         self.selectChannel(self._current_channel_index)
@@ -110,7 +106,7 @@ class ConfigViewModel(QObject):
             voltage
         )
 
-        self.project_management_use_case.save_project(self._current_project)
+        project_management.save_project(self._current_project)
 
         # Update UI
         self.currentProjectChanged.emit()
@@ -127,7 +123,7 @@ class ConfigViewModel(QObject):
             current
         )
 
-        self.project_management_use_case.save_project(self._current_project)
+        project_management.save_project(self._current_project)
 
         # Update UI
         self.currentProjectChanged.emit()
@@ -175,7 +171,7 @@ class ConfigViewModel(QObject):
         # Use the use case to reset the settings
         self.power_supply_configuration_use_case.reset_power_supply_settings(self._current_project.power_supply)
 
-        self.project_management_use_case.save_project(self._current_project)
+        project_management.save_project(self._current_project)
 
         # Update UI
         self.currentProjectChanged.emit()
@@ -189,7 +185,7 @@ class ConfigViewModel(QObject):
         logger.info(f"Deleting project {self._current_project.name} (ID: {self._current_project.id})")
 
         # Use the use case to delete the project
-        self.project_management_use_case.delete_project(self._current_project)
+        project_management.delete_project(self._current_project)
 
         # Refresh the project list for the current channel
         self.selectChannel(self._current_channel_index)
@@ -203,3 +199,4 @@ class ConfigViewModel(QObject):
             self._current_project_proxy = ProjectProxy(project)
             self._project_model.set_checked(index)
             self.currentProjectChanged.emit()
+

@@ -1,6 +1,7 @@
 from enum import Enum
 from PySide6.QtCore import QObject, Property, Slot, Signal
 from base.models.pcie_1762h import Status
+from core.use_cases import use_cases
 
 
 class DioChannelType(Enum):
@@ -39,7 +40,7 @@ class DioChannelProxy(QObject):
     def status(self, value):
         if self._channel_data.status.value != value:
             # Convert string to enum, handling case insensitivity
-            status_enum = Status(value.lower())
+            status_enum = Status(value.upper())
             self._channel_data.status = status_enum
             self.statusNotify.emit(value)
 
@@ -107,14 +108,18 @@ class Pcie1762hProxy(QObject):
             if channel:
                 channel.name = name
 
+            use_cases.pcie1726h_config.save_do_channel_status(self._pcie_data, index, status_enum)
+
     @Slot(int, str)
     def setDoChannelStatus(self, index, status):
         if self._pcie_data:
             channel = next((ch for ch in self._pcie_data.do_channels if ch.index == index), None)
             if channel:
                 # Convert string to enum, handling case insensitivity
-                status_enum = Status(status.lower())
+                status_enum = Status(status.upper())
                 channel.status = status_enum
+
+                use_cases.pcie1726h_config.save(self._pcie_data)
 
     @Slot()
     def reset(self):

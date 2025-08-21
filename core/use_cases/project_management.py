@@ -1,4 +1,4 @@
-from base.repositories import ProjectRepository, ChannelRepository
+from base.repositories import repository
 from base.models.project import Project
 from base.models.power_supply import PowerSupply
 from base.models.pcie_1762h import Pcie1762h
@@ -7,10 +7,6 @@ from typing import List
 
 
 class ProjectManagement:
-    def __init__(self, project_repository: ProjectRepository, channel_repository: ChannelRepository):
-        self.project_repository = project_repository
-        self.channel_repository = channel_repository
-
     def add_project(self, name: str, channel_index: int) -> Project:
         # Create a new project
         project = Project(name=name)
@@ -27,19 +23,22 @@ class ProjectManagement:
         project.channel = self.channel_repository.get_channel_from_index(channel_index)
 
         # Save the project
-        self.project_repository.save_project(project)
+        repository.project.save_project(project)
 
         return project
 
     def delete_project(self, project: Project):
-        self.project_repository.delete_project(project)
+        repository.project.delete_project(project)
 
     def select_project(self, channel_index: int) -> List[Project]:
         # Create a channel object based on the index
         channel = Channel(channel_index)
         # Get projects for the selected channel
-        projects = self.project_repository.get_projects_by_channel(channel)
+        projects = repository.project.get_projects_by_channel(channel)
         return projects
 
     def save_project(self, project: Project):
-        self.project_repository.save_project(project)
+        repository.project.save_project(project)
+
+
+project_management = ProjectManagement()

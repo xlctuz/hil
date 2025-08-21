@@ -113,32 +113,28 @@ Pane {
                                             id: textField
                                             Layout.fillWidth: true
                                             placeholderText: qsTr("通道名称")
-                                            text: pcie1762h?.doChannels[15 - index]?.name
-                                                || ""
+                                            text: pcie1762h?.doChannels[15 - index]?.name || ""
                                         }
 
                                         RadioButton {
                                             id: radioButton
                                             text: qsTr("高")
                                             display: AbstractButton.IconOnly
-                                            checked: pcie1762h?.doChannels[15 - index]?.status
-                                                === "high"
+                                            checked: pcie1762h?.doChannels[15 - index]?.status === "HIGH"
                                         }
 
                                         RadioButton {
                                             id: radioButton1
                                             text: qsTr("低")
                                             display: AbstractButton.TextBesideIcon
-                                            checked: pcie1762h?.doChannels[15 - index]?.status
-                                                === "low"
+                                            checked: pcie1762h?.doChannels[15 - index]?.status === "LOW"
                                         }
 
                                         RadioButton {
                                             id: radioButton2
                                             text: qsTr("X")
                                             display: AbstractButton.TextBesideIcon
-                                            checked: pcie1762h?.doChannels[15 - index]?.status
-                                                === "na"
+                                            checked: pcie1762h?.doChannels[15 - index]?.status === "NA"
                                         }
 
                                         Connections {

@@ -6,14 +6,14 @@ from ui.project_model import ProjectModel
 from ui.project_proxy import ProjectProxy
 from typing import List
 from base.logger import logger
+from core.use_cases import use_cases
 
 
 class MainViewModel(QObject):
     currentProjectChanged = Signal()
 
-    def __init__(self, project_management_use_case: ProjectManagement, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self.project_management_use_case = project_management_use_case
         self._project_model = ProjectModel()
         self._current_project = None
         self._current_project_proxy = ProjectProxy(None)
@@ -33,7 +33,7 @@ class MainViewModel(QObject):
         logger.info(f"Channel {index + 1} selected")
 
         # Use the use case to get projects for the selected channel
-        projects = self.project_management_use_case.select_project(index)
+        projects = use_cases.project_management.select_project(index)
         logger.info(f"{projects}")
         self._project_model.set_projects(projects)
 
