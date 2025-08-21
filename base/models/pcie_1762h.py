@@ -2,14 +2,6 @@ from enum import Enum
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from .channel import Base
-import time
-from common.logger import logger
-
-
-deviceDescription = "PCIE-1762H,BID#0"
-profilePath = u"pcie-1762h.xml"
-startPort = 0
-portCount = 1
 
 
 class Status(Enum):
@@ -68,54 +60,6 @@ class Pcie1762hORM(Base):
         if not self.di_channels:
             self.di_channels = [Pcie1762hDiChannelORM(index=i) for i in range(16)]
         super().__init__(**kwargs)
-
-    # Domain model methods
-    def run_test(self):
-        from Automation.BDaq.InstantDoCtrl import InstantDoCtrl
-
-        instantDoCtrl = None
-        try:
-            instantDoCtrl = InstantDoCtrl(deviceDescription)
-            instantDoCtrl.loadProfile = profilePath
-
-            port = instantDoCtrl.readAny(0, 2)[1]
-            for c in self.do_channels:
-                i = c.index // 8
-                j = c.index % 8
-                if c.status == Status.HIGH:
-                    port[i] |= 1 << j
-                elif c.status == Status.LOW:
-                    port[i] &= ~(1 << j)
-
-            logger.info(f"port {port}")
-            instantDoCtrl.writeAny(0, 2, port)
-            time.sleep(0.5)
-            return instantDoCtrl.readAny(0, 2)[1]
-        finally:
-            if instantDoCtrl:
-                instantDoCtrl.dispose()
-
-    def get_di(self):
-        from Automation.BDaq.InstantDiCtrl import InstantDiCtrl
-        instantDiCtrl = None
-        try:
-            instantDiCtrl = InstantDiCtrl(deviceDescription)
-            instantDiCtrl.loadProfile = profilePath
-
-            return instantDiCtrl.readAny(0, 2)[1]
-        finally:
-            if instantDiCtrl:
-                instantDiCtrl.dispose()
-
-    def set_do_channel_name(self, index: int, name: str):
-        channel = next((ch for ch in self.do_channels if ch.index == index), None)
-        if channel:
-            channel.name = name
-
-    def set_do_channel_status(self, index: int, status: Status):
-        channel = next((ch for ch in self.do_channels if ch.index == index), None)
-        if channel:
-            channel.status = status
 
 
 # For backward compatibility, we can create an alias
