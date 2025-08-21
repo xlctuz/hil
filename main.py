@@ -14,34 +14,34 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Import core models for database initialization
-# We need to import the ORM models from their new location in data_access
+# We need to import the ORM models from their new location in base
 # These are used only for database initialization
-from data_access.persistence.models.channel import Base as ChannelBase, Channel as ChannelORM
-from data_access.persistence.models.project import Base as ProjectBase, Project as ProjectORM
-from data_access.persistence.models.power_supply_it6302 import Base as PowerSupplyBase, Power_supply_it6302 as PowerSupplyORM
-from data_access.persistence.models.pcie_1762h_controller import Base as Pcie1762hBase, Pcie_1762h as Pcie1762hORM
+from base.models.channel import Base as ChannelBase, ChannelORM
+from base.models.project import Base as ProjectBase, ProjectORM
+from base.models.power_supply import Base as PowerSupplyBase, PowerSupplyORM
+from base.models.pcie_1762h import Base as Pcie1762hBase, Pcie1762hORM
 
-# Import data access components
-from data_access.persistence.database import engine, Session
-from data_access.persistence.repositories import ProjectRepository
-from data_access.hardware.power_supply_adapter import PowerSupplyAdapter
-from data_access.hardware.pcie_1762h_adapter import Pcie1762hAdapter
-from data_access.hardware.power_supply_polling_service_adapter import PowerSupplyPollingServiceAdapter
+# Import base components
+from base.database import engine, Session
+from base.repositories import ProjectRepository
+from base.devices.power_supply_adapter import PowerSupplyAdapter
+from base.devices.pcie_1762h_adapter import Pcie1762hAdapter
+from base.devices.power_supply_polling_service_adapter import PowerSupplyPollingServiceAdapter
 
-# Import application use cases
-from business.application.use_cases.select_project import SelectProject
-from business.application.use_cases.configure_power_supply import ConfigurePowerSupply
-from business.application.use_cases.add_project import AddProject
-from business.application.use_cases.delete_project import DeleteProject
-from business.application.use_cases.set_power_supply_voltage import SetPowerSupplyVoltage
-from business.application.use_cases.set_power_supply_current import SetPowerSupplyCurrent
-from business.application.use_cases.reset_power_supply_settings import ResetPowerSupplySettings
-from business.application.use_cases.toggle_power_supply_test import TogglePowerSupplyTest
+# Import core use cases
+from core.use_cases.select_project import SelectProject
+from core.use_cases.configure_power_supply import ConfigurePowerSupply
+from core.use_cases.add_project import AddProject
+from core.use_cases.delete_project import DeleteProject
+from core.use_cases.set_power_supply_voltage import SetPowerSupplyVoltage
+from core.use_cases.set_power_supply_current import SetPowerSupplyCurrent
+from core.use_cases.reset_power_supply_settings import ResetPowerSupplySettings
+from core.use_cases.toggle_power_supply_test import TogglePowerSupplyTest
 
 # Import UI components
-from presentation.ui.main_view_model import MainViewModel
-from presentation.ui.config_view_model import ConfigViewModel
-from presentation.ui.backend_adapter import BackendAdapter
+from ui.main_view_model import MainViewModel
+from ui.config_view_model import ConfigViewModel
+from ui.backend_adapter import BackendAdapter
 
 
 class App:
@@ -54,7 +54,7 @@ class App:
         
         # Initialize use cases
         self.select_project_use_case = SelectProject(self.project_repository)
-        self.configure_power_supply_use_case = ConfigurePowerSupply(self.power_supply_adapter)
+        self.configure_power_supply_use_case = ConfigurePowerSupply()
         self.add_project_use_case = AddProject(self.project_repository)
         self.delete_project_use_case = DeleteProject(self.project_repository)
         self.set_power_supply_voltage_use_case = SetPowerSupplyVoltage()
