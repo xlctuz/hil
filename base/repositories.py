@@ -31,9 +31,6 @@ class ProjectRepository:
                                                                        joinedload(Pcie1762h.di_channels)))\
                        .all()
 
-            for project in projects:
-                logger.info(f"{project.name} {project.power_supply}")
-
             return projects
         finally:
             session.close()
@@ -59,7 +56,6 @@ class ProjectRepository:
 
             session.commit()
         except Exception as e:
-            logger.error(f"failed save project {e}")
             session.rollback()
             raise e
         finally:

@@ -175,6 +175,8 @@ class ConfigViewModel(QObject):
         # Use the use case to reset the settings
         self.power_supply_configuration_use_case.reset_power_supply_settings(self._current_project.power_supply)
 
+        self.project_management_use_case.save_project(self._current_project)
+
         # Update UI
         self.currentProjectChanged.emit()
 
