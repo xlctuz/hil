@@ -2,6 +2,8 @@ from enum import Enum
 from PySide6.QtCore import QObject, Property, Slot, Signal
 from base.models.pcie_1762h import Status
 from core.use_cases import use_cases
+from base.logger import logger
+import traceback
 
 
 class DioChannelType(Enum):
@@ -60,7 +62,7 @@ class DioEchoProxy(QObject):
     def status(self, value):
         if self._status.value != value:
             # Convert string to enum, handling case insensitivity
-            status_enum = Status(value.lower())
+            status_enum = Status(value.upper())
             self._status = status_enum
             self.statusNotify.emit(value)
 
@@ -82,16 +84,16 @@ class Pcie1762hProxy(QObject):
 
             for ch_data in sorted_do:
                 self._do_channels.append(DioChannelProxy(ch_data, DioChannelType.DO, self))
-            for ch_data in sorted_di:
-                self._di_channels.append(DioChannelProxy(ch_data, DioChannelType.DI, self))
+            # for ch_data in sorted_di:
+            #     self._di_channels.append(DioChannelProxy(ch_data, DioChannelType.DI, self))
 
     @Property('QVariant', constant=True)
     def doChannels(self):
         return self._do_channels
 
-    @Property('QVariant', constant=True)
-    def diChannels(self):
-        return self._di_channels
+    # @Property('QVariant', constant=True)
+    # def diChannels(self):
+    #     return self._di_channels
 
     @Property('QVariant', constant=True)
     def doEchos(self):
@@ -112,20 +114,21 @@ class Pcie1762hProxy(QObject):
     @Slot(int, str)
     def setDoChannelStatus(self, index, status):
         if self._pcie_data:
-            channel = next((ch for ch in self._pcie_data.do_channels if ch.index == index), None)
+            channel = next((ch for ch in self._do_channels if ch.index == index), None)
             if channel:
                 # Convert string to enum, handling case insensitivity
-                status_enum = Status(status.upper())
-                channel.status = status_enum
+                channel.status = status
                 use_cases.pcie1726h_config.save(self._pcie_data)
 
     @Slot()
     def reset(self):
+        logger.info(f"reset")
         if self._pcie_data:
-            for ch in self._pcie_data.do_channels:
-                ch.status = Status.NA
+            for ch in self._do_channels:
+                ch.status = "NA"
 
     @Slot()
     def test(self):
+        logger.info(f"test")
         # TODO: Implement test logic with Pcie1762hPort
         pass

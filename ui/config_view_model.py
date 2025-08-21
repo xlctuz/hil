@@ -55,7 +55,7 @@ class ConfigViewModel(QObject):
             return
 
         # Use the use case to configure the power supply
-        self.power_supply_configuration_use_case.configure_power_supply(
+        use_cases.power_supply_config.configure_power_supply(
             self._current_project.power_supply,
             resource_name,
             baud_rate
@@ -69,7 +69,7 @@ class ConfigViewModel(QObject):
     @Slot(int)
     def selectChannel(self, index):
         self._current_channel_index = index
-        logger.info(f"Channel {index + 1} selected")
+        logger.info(f"Channel {index} selected")
 
         # Use the use case to get projects for the selected channel
         projects = project_management.select_project(index)
@@ -100,7 +100,7 @@ class ConfigViewModel(QObject):
             return
 
         # Use the use case to set the voltage
-        self.power_supply_configuration_use_case.set_power_supply_voltage(
+        use_cases.power_supply_config.set_power_supply_voltage(
             self._current_project.power_supply,
             channel_index,
             voltage
@@ -117,7 +117,7 @@ class ConfigViewModel(QObject):
             return
 
         # Use the use case to set the current
-        self.power_supply_configuration_use_case.set_power_supply_current(
+        use_cases.power_supply_config.set_power_supply_current(
             self._current_project.power_supply,
             channel_index,
             current
@@ -145,7 +145,7 @@ class ConfigViewModel(QObject):
             return
 
         # Use the use case to toggle the test
-        self.power_supply_configuration_use_case.toggle_power_supply_test(
+        use_cases.power_supply_config.toggle_power_supply_test(
             ps_config,
             self._current_project,
             testing,
@@ -169,7 +169,7 @@ class ConfigViewModel(QObject):
         logger.info(f"Resetting power supply settings for project {self._current_project.name}")
 
         # Use the use case to reset the settings
-        self.power_supply_configuration_use_case.reset_power_supply_settings(self._current_project.power_supply)
+        use_cases.power_supply_config.reset_power_supply_settings(self._current_project.power_supply)
 
         project_management.save_project(self._current_project)
 

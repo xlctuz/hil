@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-from .channel import Base
+from base.database import Base
 from .power_supply import PowerSupply
 from .pcie_1762h import Pcie1762h
 
@@ -11,9 +11,7 @@ class Project(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
 
-    # many-to-one: a project belongs to one channel
-    channel_id = Column(Integer, ForeignKey('channels.id'))
-    channel = relationship("Channel", back_populates="projects")
+    channel_index = Column(Integer)
 
     power_supply = relationship("PowerSupply", uselist=False, back_populates="project")
     pcie_1762h = relationship("Pcie1762h", uselist=False, back_populates="project")

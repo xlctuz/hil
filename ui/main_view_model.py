@@ -1,7 +1,6 @@
 from PySide6.QtCore import QObject, Property, Slot, Signal
 from core.use_cases.project_management import ProjectManagement
 from base.models.project import Project
-from base.models.channel import Channel
 from ui.project_model import ProjectModel
 from ui.project_proxy import ProjectProxy
 from typing import List

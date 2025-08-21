@@ -1,5 +1,4 @@
 from base.models.project import Project
-from base.models.channel import Channel
 from base.database import Session, engine
 from base.models.power_supply import PowerSupply, PowerSupplyChannel
 from base.models.pcie_1762h import Base as Pcie1762hBase, Pcie1762h, Pcie1762hDoChannel, Pcie1762hDiChannel, Status
@@ -7,25 +6,13 @@ from base.logger import logger
 from sqlalchemy.orm import joinedload
 from typing import List
 
-
-class ChannelRepository:
-    def get_channel_from_index(self, channel_index: int) -> Channel:
-        session = Session()
-        try:
-            return session.query(Channel).filter(Channel.index == channel_index).first()
-        finally:
-            session.close()
-
-
 class ProjectRepository:
-    def get_projects_by_channel(self, channel: Channel) -> List[Project]:
+    def get_projects_by_channel(self, channel_index: int) -> List[Project]:
         session = Session()
         try:
-            # Assuming channel IDs are 1, 2, 3...
-            channel_id = channel.index + 1
             projects =\
                 session.query(Project)\
-                       .filter(Project.channel_id == channel_id)\
+                       .filter(Project.channel_index == channel_index)\
                        .options(joinedload(Project.power_supply).joinedload(PowerSupply.channels),
                                 joinedload(Project.pcie_1762h).options(joinedload(Pcie1762h.do_channels),
                                                                        joinedload(Pcie1762h.di_channels)))\
@@ -72,29 +59,6 @@ class ProjectRepository:
         finally:
             session.close()
 
-    def create_channels(self):
-        session = Session()
-        try:
-            # Create channels if they don't exist
-            if session.query(Channel).count() == 0:
-                channels = [
-                    Channel(index=0, name="通道1"),
-                    Channel(index=1, name="通道2"),
-                    Channel(index=2, name="通道3")
-                ]
-                session.add_all(channels)
-                session.commit()
-        finally:
-            session.close()
-
-    def get_channels(self) -> List[Channel]:
-        session = Session()
-        try:
-            channels = session.query(Channel).order_by(Channel.id).all()
-            return channels
-        finally:
-            session.close()
-
 
 class Pcie1762hRepository:
     def save(self, pcie_1762h):
@@ -115,7 +79,6 @@ class Pcie1762hRepository:
 
 class Repository:
     def __init__(self):
-        self.channel = ChannelRepository()
         self.project = ProjectRepository()
         self.pcie_1762h = Pcie1762hRepository()
 

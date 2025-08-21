@@ -1,7 +1,8 @@
 from enum import StrEnum
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
-from .channel import Base
+from base.database import Base
+
 import pyvisa
 from contextlib import contextmanager
 

@@ -2,7 +2,7 @@ from base.repositories import repository
 from base.models.project import Project
 from base.models.power_supply import PowerSupply
 from base.models.pcie_1762h import Pcie1762h
-from base.models.channel import Channel
+from base.logger import logger
 from typing import List
 
 
@@ -20,7 +20,7 @@ class ProjectManagement:
         project.pcie_1762h = pcie_1762h
 
         # Set the channel for the project
-        project.channel = self.channel_repository.get_channel_from_index(channel_index)
+        project.channel_index = channel_index
 
         # Save the project
         repository.project.save_project(project)
@@ -31,10 +31,10 @@ class ProjectManagement:
         repository.project.delete_project(project)
 
     def select_project(self, channel_index: int) -> List[Project]:
-        # Create a channel object based on the index
-        channel = Channel(channel_index)
+        logger.info(f"select project on channel {channel_index}")
         # Get projects for the selected channel
-        projects = repository.project.get_projects_by_channel(channel)
+        projects = repository.project.get_projects_by_channel(channel_index)
+
         return projects
 
     def save_project(self, project: Project):

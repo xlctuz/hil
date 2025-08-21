@@ -1,7 +1,7 @@
 from enum import Enum
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import relationship
-from .channel import Base
+from base.database import Base
 
 
 class Status(Enum):

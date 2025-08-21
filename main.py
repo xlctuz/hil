@@ -16,10 +16,10 @@ from sqlalchemy.orm import sessionmaker
 # Import core models for database initialization
 # We need to import the ORM models from their new location in base
 # These are used only for database initialization
-from base.models.channel import Base, Channel
 from base.models.project import Project
 from base.models.power_supply import PowerSupply
 from base.models.pcie_1762h import Pcie1762h
+from base.database import Base
 
 # Import base components
 from base.database import engine, Session
@@ -59,8 +59,6 @@ class App:
         # Create tables
         Base.metadata.create_all(engine)
 
-        # Create channels if they don't exist
-        repository.project.create_channels()
 
     @property
     def mainViewModel(self):
