@@ -96,7 +96,7 @@ class PowerSupplyPoller(QObject):
                 voltage_data.append(None)
                 current_data.append(None)
                 power_data.append(None)
-                print(f"Error reading channel {i+1}: {str(e)}")
+                logger.info(f"Error reading channel {i+1}: {str(e)}")
         
         # Return the data as a dictionary
         return {

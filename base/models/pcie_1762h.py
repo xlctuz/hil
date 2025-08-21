@@ -10,19 +10,6 @@ class Status(Enum):
     NA = "na"
 
 
-class Pcie1762hDiChannel:
-    def __init__(self, index):
-        self.index = index
-        self.name = ""
-
-
-class Pcie1762hDoChannel:
-    def __init__(self, index):
-        self.index = index
-        self.name = ""
-        self.status = Status.NA
-
-
 class Pcie1762hDiChannel(Base):
     __tablename__ = 'pcie_1762h_di_channel'
     id = Column(Integer, primary_key=True)
@@ -49,7 +36,7 @@ class Pcie1762h(Base):
     id = Column(Integer, primary_key=True)
 
     project_id = Column(Integer, ForeignKey('projects.id'))
-    project = relationship("ProjectORM", back_populates="pcie_1762h", uselist=False)
+    project = relationship("Project", back_populates="pcie_1762h", uselist=False)
     do_channels = relationship("Pcie1762hDoChannel", back_populates="pcie_1762h", cascade="all, delete-orphan")
     di_channels = relationship("Pcie1762hDiChannel", back_populates="pcie_1762h", cascade="all, delete-orphan")
 

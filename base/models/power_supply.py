@@ -47,7 +47,7 @@ class PowerSupply(Base):
     baud_rate = Column(Integer)
 
     project_id = Column(Integer, ForeignKey('projects.id'))
-    project = relationship("ProjectORM", back_populates="power_supply", uselist=False)
+    project = relationship("Project", back_populates="power_supply", uselist=False)
 
     channels = relationship("PowerSupplyChannel", back_populates="power_supply", cascade="all, delete-orphan")
 

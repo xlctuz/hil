@@ -5,6 +5,7 @@ from base.models.channel import Channel
 from ui.project_model import ProjectModel
 from ui.project_proxy import ProjectProxy
 from typing import List
+from base.logger import logger
 
 
 class MainViewModel(QObject):
@@ -29,10 +30,11 @@ class MainViewModel(QObject):
     @Slot(int)
     def selectChannel(self, index):
         self._current_channel_index = index
-        print(f"Channel {index + 1} selected")
-        
+        logger.info(f"Channel {index + 1} selected")
+
         # Use the use case to get projects for the selected channel
         projects = self.project_management_use_case.select_project(index)
+        logger.info(f"{projects}")
         self._project_model.set_projects(projects)
 
         self._current_project = None
@@ -45,7 +47,7 @@ class MainViewModel(QObject):
     def selectProject(self, index):
         project = self._project_model.get_project(index)
         if project:
-            print(f"Project {project.id} selected")
+            logger.info(f"Project {project.id} selected")
             self._current_project = project
             self._current_project_proxy = ProjectProxy(project)
             self._project_model.set_checked(index)

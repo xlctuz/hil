@@ -9,9 +9,9 @@ Pane {
     width: 1800
     height: 800
     z: 0
-    property var powerSupply: null
     property alias btnTest: button1
     property var configViewModel: backend?.configViewModel
+    property var powerSupply: backend?.configViewModel?.currentProject?.powerSupply
 
     ColumnLayout {
         id: columnLayout
@@ -35,8 +35,7 @@ Pane {
                 ComboBox {
                     id: comboBoxResource
                     model: configViewModel?.availableVisaResources
-                    currentIndex: model?.indexOf(powerSupply?.resource_name) || -1
-
+                    currentIndex: model.indexOf(powerSupply?.resource_name)
                 }
 
                 Label {
@@ -168,7 +167,7 @@ Pane {
                 property int currentX: 0
 
                 Connections {
-                    target: backend.configViewModel
+                    target: backend?.configViewModel
                     function onPowerSupplyDataUpdated(voltage, current, power) {
                         console.log(`power supply data updated, ${voltage} - ${current} - ${power}`)
                         ps_channel.voltageSeries.append(columnLayout2.currentX, voltage[0]);
@@ -215,7 +214,7 @@ Pane {
     Connections {
         target: comboBoxBaud
         function onActivated(index) {
-            console.log(`power supply config resource ${comboBoxBaud.currentText}`)
+            console.log(`power supply config baud ${comboBoxBaud.currentText}`)
             configViewModel.setPowerSupplyConfig(powerSupply.resource_name, comboBoxBaud.currentText)
         }
     }

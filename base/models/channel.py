@@ -13,7 +13,7 @@ class Channel(Base):
     name = Column(String)
 
     # one-to-many: a channel has many projects
-    projects = relationship("ProjectORM", back_populates="channel")
+    projects = relationship("Project", back_populates="channel")
 
     def __init__(self, index, name=""):
         self.index = index

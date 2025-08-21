@@ -1,4 +1,5 @@
 from base.models.power_supply import PowerSupply, IO, Channel
+from base.logger import logger
 
 
 class PowerSupplyConfiguration:
@@ -6,6 +7,7 @@ class PowerSupplyConfiguration:
         pass
 
     def configure_power_supply(self, power_supply: PowerSupply, resource_name: str, baud_rate: int):
+        logger.info(f"config power supply, resource name {resource_name}, baud_rate {baud_rate}")
         power_supply.resource_name = resource_name
         power_supply.baud_rate = baud_rate
 

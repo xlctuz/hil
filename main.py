@@ -9,17 +9,17 @@ from PySide6.QtQml import QQmlDebuggingEnabler
 QQmlDebuggingEnabler.enableDebugging(True)
 from PySide6.QtCharts import QChartView, QChart, QLineSeries
 import qml.resources_rc
-from common.logger import logger
+from base.logger import logger
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Import core models for database initialization
 # We need to import the ORM models from their new location in base
 # These are used only for database initialization
-from base.models.channel import Base as ChannelBase, Channel
-from base.models.project import Base as ProjectBase, ProjectORM
-from base.models.power_supply import Base as PowerSupplyBase, PowerSupply
-from base.models.pcie_1762h import Base as Pcie1762hBase, Pcie1762h
+from base.models.channel import Base, Channel
+from base.models.project import Project
+from base.models.power_supply import PowerSupply
+from base.models.pcie_1762h import Pcie1762h
 
 # Import base components
 from base.database import engine, Session
@@ -45,11 +45,11 @@ class App:
         self.power_supply_adapter = PowerSupplyAdapter()
         self.pcie_1762h_adapter = Pcie1762hAdapter()
         self.power_supply_polling_service = PowerSupplyPollingServiceAdapter()
-        
+
         # Initialize use cases
         self.project_management_use_case = ProjectManagement(self.project_repository)
         self.power_supply_configuration_use_case = PowerSupplyConfiguration()
-        
+
         # Initialize view models
         self._main_view_model = MainViewModel(self.project_management_use_case)
         self._config_view_model = ConfigViewModel(
@@ -58,17 +58,14 @@ class App:
             self.power_supply_adapter,
             self.power_supply_polling_service
         )
-        
+
         # Initialize database
         self._initialize_database()
 
     def _initialize_database(self):
         # Create tables
-        ChannelBase.metadata.create_all(engine)
-        ProjectBase.metadata.create_all(engine)
-        PowerSupplyBase.metadata.create_all(engine)
-        Pcie1762hBase.metadata.create_all(engine)
-        
+        Base.metadata.create_all(engine)
+
         # Create channels if they don't exist
         self.project_repository.create_channels()
 
@@ -88,7 +85,7 @@ if __name__ == "__main__":
 
     # Create the application components
     app_instance = App()
-    
+
     # Create the QML backend adapter
     backend = BackendAdapter(
         app_instance.mainViewModel,

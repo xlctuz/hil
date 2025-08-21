@@ -1,10 +1,11 @@
-from base.models.project import ProjectORM, Project
+from base.models.project import Project, Project
 from base.models.channel import Channel, Channel
 from base.database import Session, engine
 from base.models.channel import Base as ChannelBase, Channel
-from base.models.project import Base as ProjectBase, ProjectORM
+from base.models.project import Base as ProjectBase, Project
 from base.models.power_supply import Base as PowerSupplyBase, PowerSupply, PowerSupplyChannel
 from base.models.pcie_1762h import Base as Pcie1762hBase, Pcie1762h, Pcie1762hDoChannel, Pcie1762hDiChannel, Status
+from base.logger import logger
 from sqlalchemy.orm import joinedload
 from typing import List
 
@@ -15,49 +16,17 @@ class ProjectRepository:
         try:
             # Assuming channel IDs are 1, 2, 3...
             channel_id = channel.index + 1
-            projects_orm = session.query(ProjectORM).filter(ProjectORM.channel_id == channel_id)                 .options(joinedload(ProjectORM.power_supply).joinedload(PowerSupply.channels),
-                         joinedload(ProjectORM.pcie_1762h).options(joinedload(Pcie1762h.do_channels),
-                                                                   joinedload(Pcie1762h.di_channels)))                 .all()
-            
-            # Convert ORM objects to domain models
-            projects = []
-            for proj_orm in projects_orm:
-                proj = Project(proj_orm.name)
-                proj.id = proj_orm.id
-                
-                # Convert channel
-                if proj_orm.channel:
-                    proj.channel = Channel(proj_orm.channel.index, proj_orm.channel.name)
-                
-                # Convert power supply
-                if proj_orm.power_supply:
-                    ps_orm = proj_orm.power_supply
-                    ps = PowerSupply(ps_orm.resource_name, ps_orm.baud_rate)
-                    ps.id = ps_orm.id
-                    for ch_orm in ps_orm.channels:
-                        if ch_orm.index < len(ps.channels):
-                            ps.channels[ch_orm.index].voltage = ch_orm.voltage
-                            ps.channels[ch_orm.index].current = ch_orm.current
-                    proj.power_supply = ps
-                
-                # Convert PCIE-1762H
-                if proj_orm.pcie_1762h:
-                    pcie_orm = proj_orm.pcie_1762h
-                    pcie = Pcie1762h()
-                    pcie.id = pcie_orm.id
-                    for do_ch_orm in pcie_orm.do_channels:
-                        if do_ch_orm.index < len(pcie.do_channels):
-                            pcie.do_channels[do_ch_orm.index].name = do_ch_orm.name
-                            # Handle status conversion from enum
-                            if do_ch_orm.status:
-                                pcie.do_channels[do_ch_orm.index].status = do_ch_orm.status
-                    for di_ch_orm in pcie_orm.di_channels:
-                        if di_ch_orm.index < len(pcie.di_channels):
-                            pcie.di_channels[di_ch_orm.index].name = di_ch_orm.name
-                    proj.pcie_1762h = pcie
-                
-                projects.append(proj)
-            
+            projects =\
+                session.query(Project)\
+                       .filter(Project.channel_id == channel_id)\
+                       .options(joinedload(Project.power_supply).joinedload(PowerSupply.channels),
+                                joinedload(Project.pcie_1762h).options(joinedload(Pcie1762h.do_channels),
+                                                                       joinedload(Pcie1762h.di_channels)))\
+                       .all()
+
+            for project in projects:
+                logger.info(f"{project.name} {project.power_supply}")
+
             return projects
         finally:
             session.close()
@@ -65,13 +34,10 @@ class ProjectRepository:
     def get_project_by_id(self, project_id: int) -> Project:
         session = Session()
         try:
-            project_orm = session.query(ProjectORM).filter(ProjectORM.id == project_id).first()
-            if not project_orm:
+            project = session.query(Project).filter(Project.id == project_id).first()
+            if not project:
                 return None
-            
-            # Convert ORM object to domain model (simplified)
-            project = Project(project_orm.name)
-            # Note: Full conversion would require implementing the same logic as in get_projects_by_channel
+
             return project
         finally:
             session.close()
@@ -79,87 +45,12 @@ class ProjectRepository:
     def save_project(self, project: Project):
         session = Session()
         try:
-            # Check if project already exists
-            project_orm = None
             if hasattr(project, 'id') and project.id:
-                project_orm = session.query(ProjectORM).filter(ProjectORM.id == project.id).first()
-            
-            if not project_orm:
-                project_orm = ProjectORM(name=project.name)
-                session.add(project_orm)
-                session.flush()  # To get the ID
-            
-            # Update project properties
-            project_orm.name = project.name
-            
-            # Set channel
-            if project.channel:
-                # Assuming channel IDs are 1, 2, 3...
-                channel_id = project.channel.index + 1
-                project_orm.channel_id = channel_id
-            
-            # Handle power supply
-            if project.power_supply:
-                ps = project.power_supply
-                if not project_orm.power_supply:
-                    ps_orm = PowerSupply(resource_name=ps.resource_name, baud_rate=ps.baud_rate)
-                    project_orm.power_supply = ps_orm
-                else:
-                    ps_orm = project_orm.power_supply
-                    ps_orm.resource_name = ps.resource_name
-                    ps_orm.baud_rate = ps.baud_rate
-                
-                # Update power supply channels
-                for i, ch in enumerate(ps.channels):
-                    if i < len(ps_orm.channels):
-                        ch_orm = ps_orm.channels[i]
-                        ch_orm.voltage = ch.voltage
-                        ch_orm.current = ch.current
-                    else:
-                        ch_orm = PowerSupplyChannel(index=i, voltage=ch.voltage, current=ch.current)
-                        ps_orm.channels.append(ch_orm)
-            
-            # Handle PCIE-1762H
-            if project.pcie_1762h:
-                pcie = project.pcie_1762h
-                if not project_orm.pcie_1762h:
-                    pcie_orm = Pcie1762h()
-                    project_orm.pcie_1762h = pcie_orm
-                else:
-                    pcie_orm = project_orm.pcie_1762h
-                
-                # Update DO channels
-                for i, do_ch in enumerate(pcie.do_channels):
-                    if i < len(pcie_orm.do_channels):
-                        do_ch_orm = pcie_orm.do_channels[i]
-                        do_ch_orm.name = do_ch.name
-                        # Convert Status enum to string for ORM
-                        if do_ch.status:
-                            do_ch_orm.status = do_ch.status
-                    else:
-                        # Convert Status enum to string for ORM
-                        status_value = do_ch.status if do_ch.status else Status.NA
-                        do_ch_orm = Pcie1762hDoChannel(
-                            index=i, 
-                            name=do_ch.name, 
-                            status=status_value
-                        )
-                        pcie_orm.do_channels.append(do_ch_orm)
-                
-                # Update DI channels
-                for i, di_ch in enumerate(pcie.di_channels):
-                    if i < len(pcie_orm.di_channels):
-                        di_ch_orm = pcie_orm.di_channels[i]
-                        di_ch_orm.name = di_ch.name
-                    else:
-                        di_ch_orm = Pcie1762hDiChannel(index=i, name=di_ch.name)
-                        pcie_orm.di_channels.append(di_ch_orm)
-            
+                session.merge(project)
+            else:
+                session.add(project)
+
             session.commit()
-            
-            # Update the project ID if it's a new project
-            if not hasattr(project, 'id') or not project.id:
-                project.id = project_orm.id
         except Exception as e:
             session.rollback()
             raise e
@@ -170,7 +61,7 @@ class ProjectRepository:
         session = Session()
         try:
             if hasattr(project, 'id') and project.id:
-                project_orm = session.query(ProjectORM).filter(ProjectORM.id == project.id).first()
+                project_orm = session.query(Project).filter(Project.id == project.id).first()
                 if project_orm:
                     session.delete(project_orm)
                     session.commit()
@@ -195,8 +86,7 @@ class ProjectRepository:
     def get_channels(self) -> List[Channel]:
         session = Session()
         try:
-            channels_orm = session.query(Channel).order_by(Channel.id).all()
-            channels = [Channel(ch.index, ch.name) for ch in channels_orm]
+            channels = session.query(Channel).order_by(Channel.id).all()
             return channels
         finally:
             session.close()

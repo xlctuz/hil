@@ -82,11 +82,11 @@ class ZSDigitalIOModule:
         """尝试连接到 Modbus RTU 模块。"""
         if self.modbus_client.open():
             self.is_connected = True
-            print(f"成功连接到模块: {self.port} (ID: {self.slave_id})")
+            logger.info(f"成功连接到模块: {self.port} (ID: {self.slave_id})")
             return True
         else:
             self.is_connected = False
-            print(f"错误: 无法连接到模块 {self.port}")
+            logger.info(f"错误: 无法连接到模块 {self.port}")
             return False
 
     def disconnect(self):
@@ -94,14 +94,14 @@ class ZSDigitalIOModule:
         if self.is_connected:
             self.modbus_client.close()
             self.is_connected = False
-            print("模块连接已断开。")
+            logger.info("模块连接已断开。")
             return True
         return False
 
     def _check_connection(self):
         """内部方法：检查连接状态。"""
         if not self.is_connected:
-            print("错误: 模块未连接。请先调用 .connect() 方法。")
+            logger.info("错误: 模块未连接。请先调用 .connect() 方法。")
             return False
         return True
 
@@ -111,7 +111,7 @@ class ZSDigitalIOModule:
             return None
         coils = self.modbus_client.read_coils(address, count)
         if coils is None:
-            print(f"读取线圈 (地址: {hex(address)}, 数量: {count}) 失败。")
+            logger.info(f"读取线圈 (地址: {hex(address)}, 数量: {count}) 失败。")
         return coils
 
     def _write_single_coil(self, address, value):
@@ -120,7 +120,7 @@ class ZSDigitalIOModule:
             return False
         success = self.modbus_client.write_single_coil(address, value)
         if not success:
-            print(f"写入单个线圈 (地址: {hex(address)}, 值: {value}) 失败。")
+            logger.info(f"写入单个线圈 (地址: {hex(address)}, 值: {value}) 失败。")
         return success
 
     def _write_multiple_coils(self, address, values):
@@ -129,7 +129,7 @@ class ZSDigitalIOModule:
             return False
         success = self.modbus_client.write_multiple_coils(address, values)
         if not success:
-            print(f"写入多个线圈 (地址: {hex(address)}, 值: {values}) 失败。")
+            logger.info(f"写入多个线圈 (地址: {hex(address)}, 值: {values}) 失败。")
         return success
 
     def _read_discrete_inputs(self, address, count=1):
@@ -138,7 +138,7 @@ class ZSDigitalIOModule:
             return None
         inputs = self.modbus_client.read_discrete_inputs(address, count)
         if inputs is None:
-            print(f"读取离散输入 (地址: {hex(address)}, 数量: {count}) 失败。")
+            logger.info(f"读取离散输入 (地址: {hex(address)}, 数量: {count}) 失败。")
         return inputs
 
     def _read_input_registers(self, address, count=1):
@@ -147,7 +147,7 @@ class ZSDigitalIOModule:
             return None
         registers = self.modbus_client.read_input_registers(address, count)
         if registers is None:
-            print(f"读取输入寄存器 (地址: {hex(address)}, 数量: {count}) 失败。")
+            logger.info(f"读取输入寄存器 (地址: {hex(address)}, 数量: {count}) 失败。")
         return registers
 
     def _read_holding_registers(self, address, count=1):
@@ -156,7 +156,7 @@ class ZSDigitalIOModule:
             return None
         registers = self.modbus_client.read_holding_registers(address, count)
         if registers is None:
-            print(f"读取保持寄存器 (地址: {hex(address)}, 数量: {count}) 失败。")
+            logger.info(f"读取保持寄存器 (地址: {hex(address)}, 数量: {count}) 失败。")
         return registers
 
     def _write_single_holding_register(self, address, value):
@@ -165,7 +165,7 @@ class ZSDigitalIOModule:
             return False
         success = self.modbus_client.write_single_register(address, value)
         if not success:
-            print(f"写入单个保持寄存器 (地址: {hex(address)}, 值: {value}) 失败。")
+            logger.info(f"写入单个保持寄存器 (地址: {hex(address)}, 值: {value}) 失败。")
         return success
 
     def _write_multiple_holding_registers(self, address, values):
@@ -174,7 +174,7 @@ class ZSDigitalIOModule:
             return False
         success = self.modbus_client.write_multiple_registers(address, values)
         if not success:
-            print(f"写入多个保持寄存器 (地址: {hex(address)}, 值: {values}) 失败。")
+            logger.info(f"写入多个保持寄存器 (地址: {hex(address)}, 值: {values}) 失败。")
         return success
 
     # --- 输出控制 (通过线圈寄存器 0x0000H - 0x002FH) [cite: 218, 221] ---
@@ -189,7 +189,7 @@ class ZSDigitalIOModule:
             bool: True 表示成功，False 表示失败。
         """
         if not 1 <= channel <= 48:
-            print("错误: 通道号必须在 1 到 48 之间。")
+            logger.info("错误: 通道号必须在 1 到 48 之间。")
             return False
 
         # 协议地址 = 0x0000H + (通道号 - 1) [cite: 221]
@@ -207,10 +207,10 @@ class ZSDigitalIOModule:
             bool: True 表示成功，False 表示失败。
         """
         if not 1 <= start_channel <= 48:
-            print("错误: 起始通道号必须在 1 到 48 之间。")
+            logger.info("错误: 起始通道号必须在 1 到 48 之间。")
             return False
         if not all(isinstance(s, bool) for s in states):
-            print("错误: 状态列表必须只包含布尔值 (True/False)。")
+            logger.info("错误: 状态列表必须只包含布尔值 (True/False)。")
             return False
 
         # 协议地址 = 0x0000H + (起始通道号 - 1) [cite: 221]
@@ -228,7 +228,7 @@ class ZSDigitalIOModule:
             list of bool or None: 布尔值列表表示通道状态，失败返回 None。
         """
         if not (1 <= start_channel <= 48 and 1 <= start_channel + count - 1 <= 48):
-            print("错误: 通道范围超出限制 (1-48)。")
+            logger.info("错误: 通道范围超出限制 (1-48)。")
             return None
 
         # 协议地址 = 0x0000H + (起始通道号 - 1) [cite: 221]
@@ -246,7 +246,7 @@ class ZSDigitalIOModule:
             bool or None: True 为已触发 (1), False 为未触发 (0)，失败返回 None。 [cite: 225]
         """
         if not 1 <= channel <= 48:
-            print("错误: 通道号必须在 1 到 48 之间。")
+            logger.info("错误: 通道号必须在 1 到 48 之间。")
             return None
 
         # 协议地址 = 0x0000H + (通道号 - 1) [cite: 225]
@@ -264,7 +264,7 @@ class ZSDigitalIOModule:
             list of bool or None: 布尔值列表表示通道状态，失败返回 None。
         """
         if not 1 <= count <= 48:
-            print("错误: 读取通道数量必须在 1 到 48 之间。")
+            logger.info("错误: 读取通道数量必须在 1 到 48 之间。")
             return None
 
         return self._read_discrete_inputs(self.DISCRETE_INPUT_STATUS_BASE, count)
@@ -280,7 +280,7 @@ class ZSDigitalIOModule:
             bool or None: True 为已触发 (1), False 为未触发 (0)，失败返回 None。 [cite: 243]
         """
         if not 1 <= channel <= 48:
-            print("错误: 通道号必须在 1 到 48 之间。")
+            logger.info("错误: 通道号必须在 1 到 48 之间。")
             return None
 
         # 协议地址 = 0x0000H + (通道号 - 1) [cite: 243]
@@ -319,7 +319,7 @@ class ZSDigitalIOModule:
             bool: True 表示成功，False 表示失败。
         """
         if seconds < 0:
-            print("错误: 检测时间不能为负。")
+            logger.info("错误: 检测时间不能为负。")
             return False
 
         # N = seconds / 0.1 = seconds * 10
@@ -351,7 +351,7 @@ class ZSDigitalIOModule:
             bool: True 表示成功，False 表示失败。
         """
         if not isinstance(mode_or_interval, int) or mode_or_interval < 0:
-            print("错误: 上传控制模式或间隔必须是非负整数。")
+            logger.info("错误: 上传控制模式或间隔必须是非负整数。")
             return False
         return self._write_single_holding_register(self.HOLDING_REGISTER_ACTIVE_UPLOAD_CONTROL, mode_or_interval)
 
@@ -376,7 +376,7 @@ class ZSDigitalIOModule:
             bool: True 表示成功，False 表示失败。
         """
         if not 1 <= address <= 255:
-            print("错误: RS485 地址必须在 1 到 255 之间。")
+            logger.info("错误: RS485 地址必须在 1 到 255 之间。")
             return False
         # 注意: 成功写入后，下次通信需要使用新的地址。
         success = self._write_single_holding_register(self.HOLDING_REGISTER_RS485_ADDRESS, address)
@@ -384,7 +384,7 @@ class ZSDigitalIOModule:
             # 成功设置后，更新ModbusClient的unit_id
             self.modbus_client.unit_id = address
             self.slave_id = address
-            print(f"RS485 地址已更新为: {address}。请注意，新地址将在模块重新上电后生效。")
+            logger.info(f"RS485 地址已更新为: {address}。请注意，新地址将在模块重新上电后生效。")
         return success
 
     def get_rs485_address(self):
@@ -410,7 +410,7 @@ class ZSDigitalIOModule:
             bool: True 表示成功，False 表示失败。
         """
         if not 0 <= baudrate_code <= 7:
-            print("错误: 波特率代码必须在 0 到 7 之间。")
+            logger.info("错误: 波特率代码必须在 0 到 7 之间。")
             return False
 
         success = self._write_single_holding_register(self.HOLDING_REGISTER_BAUDRATE_SETTING, baudrate_code)
@@ -421,7 +421,7 @@ class ZSDigitalIOModule:
                 5: 56000, 6: 57600, 7: 115200
             }
             new_baudrate = baudrate_map.get(baudrate_code, self.DEFAULT_BAUDRATE)
-            print(f"波特率已设置为代码 {baudrate_code} ({new_baudrate}bps)。请注意，新波特率将在模块重新上电后生效。")
+            logger.info(f"波特率已设置为代码 {baudrate_code} ({new_baudrate}bps)。请注意，新波特率将在模块重新上电后生效。")
         return success
 
     def get_baudrate_setting(self):
@@ -465,11 +465,11 @@ class ZSDigitalIOModule:
         elif start_channel == 33:
             address = self.HOLDING_REGISTER_BIT_CONTROL_CH33_48
         else:
-            print("错误: start_channel 必须是 1, 17 或 33。")
+            logger.info("错误: start_channel 必须是 1, 17 或 33。")
             return False
 
         if not 0 <= states_int <= 0xFFFF: # 16位无符号整数
-            print("错误: states_int 必须是 0 到 65535 之间的整数。")
+            logger.info("错误: states_int 必须是 0 到 65535 之间的整数。")
             return False
 
         return self._write_single_holding_register(address, states_int)
@@ -488,7 +488,7 @@ class ZSDigitalIOModule:
             bool: True 表示成功，False 表示失败。
         """
         if not 0 <= parity_code <= 2:
-            print("错误: 奇偶校验代码必须在 0 到 2 之间。")
+            logger.info("错误: 奇偶校验代码必须在 0 到 2 之间。")
             return False
 
         success = self._write_single_holding_register(self.HOLDING_REGISTER_PARITY_SETTING, parity_code)
@@ -496,7 +496,7 @@ class ZSDigitalIOModule:
             parity_map = {0: 'N', 1: 'O', 2: 'E'}
             new_parity_char = parity_map.get(parity_code, self.DEFAULT_PARITY)
             # self.modbus_client.serial_settings(parity=new_parity_char) # 通常也需要重启模块
-            print(f"奇偶校验已设置为代码 {parity_code} ({new_parity_char})。请注意，新设置将在模块重新上电后生效。")
+            logger.info(f"奇偶校验已设置为代码 {parity_code} ({new_parity_char})。请注意，新设置将在模块重新上电后生效。")
         return success
 
     def get_parity_setting(self):
@@ -526,10 +526,10 @@ class ZSDigitalIOModule:
             bool: True 表示成功，False 表示失败。
         """
         if not 1 <= channel <= 48:
-            print("错误: 通道号必须在 1 到 48 之间。")
+            logger.info("错误: 通道号必须在 1 到 48 之间。")
             return False
         if not 0 <= mode_code <= 4: # 根据文档，目前定义了0-4模式
-            print("错误: 模式代码必须在 0 到 4 之间。")
+            logger.info("错误: 模式代码必须在 0 到 4 之间。")
             return False
 
         # 协议地址 = 0x0096H + (通道号 - 1) [cite: 268]
@@ -546,7 +546,7 @@ class ZSDigitalIOModule:
             int or None: 模式代码，失败返回 None。
         """
         if not 1 <= channel <= 48:
-            print("错误: 通道号必须在 1 到 48 之间。")
+            logger.info("错误: 通道号必须在 1 到 48 之间。")
             return None
 
         address = self.HOLDING_REGISTER_CHANNEL_MODE_BASE + (channel - 1)
@@ -565,103 +565,103 @@ if __name__ == "__main__":
     module = ZSDigitalIOModule(SERIAL_PORT, slave_id=MODULE_ID)
 
     if module.connect():
-        print("\n--- 读取输入状态 ---")
+        logger.info("\n--- 读取输入状态 ---")
         # 读取通道1的离散输入状态
         input1_state = module.get_input_state(1)
         if input1_state is not None:
-            print(f"通道1输入状态 (离散输入): {'已触发' if input1_state else '未触发'}")
+            logger.info(f"通道1输入状态 (离散输入): {'已触发' if input1_state else '未触发'}")
 
         # 读取所有离散输入状态
         all_inputs = module.get_all_input_states()
         if all_inputs is not None:
-            print(f"所有离散输入状态: {all_inputs}")
+            logger.info(f"所有离散输入状态: {all_inputs}")
 
         # 通过输入寄存器读取通道2状态
         input2_reg_state = module.get_input_status_by_register(2)
         if input2_reg_state is not None:
-            print(f"通道2输入状态 (输入寄存器): {'已触发' if input2_reg_state else '未触发'}")
+            logger.info(f"通道2输入状态 (输入寄存器): {'已触发' if input2_reg_state else '未触发'}")
 
         # 获取按位表示的输入状态
         bit_packed_status = module.get_input_status_bit_packed()
         if bit_packed_status:
-            print(f"按位表示的输入状态 (Ch1-16): {bin(bit_packed_status['ch1_16'])}")
-            print(f"按位表示的输入状态 (Ch17-32): {bin(bit_packed_status['ch17_32'])}")
-            print(f"按位表示的输入状态 (Ch33-48): {bin(bit_packed_status['ch33_48'])}")
+            logger.info(f"按位表示的输入状态 (Ch1-16): {bin(bit_packed_status['ch1_16'])}")
+            logger.info(f"按位表示的输入状态 (Ch17-32): {bin(bit_packed_status['ch17_32'])}")
+            logger.info(f"按位表示的输入状态 (Ch33-48): {bin(bit_packed_status['ch33_48'])}")
 
 
-        print("\n--- 控制输出 ---")
+        logger.info("\n--- 控制输出 ---")
         # 设置通道1输出为开启
-        print("设置通道1输出为开启...")
+        logger.info("设置通道1输出为开启...")
         if module.set_output_state(1, True):
-            print("通道1输出开启成功。")
+            logger.info("通道1输出开启成功。")
         else:
-            print("通道1输出开启失败。")
+            logger.info("通道1输出开启失败。")
         time.sleep(1) # 等待1秒
 
         # 设置通道1输出为关闭
-        print("设置通道1输出为关闭...")
+        logger.info("设置通道1输出为关闭...")
         if module.set_output_state(1, False):
-            print("通道1输出关闭成功。")
+            logger.info("通道1输出关闭成功。")
         else:
-            print("通道1输出关闭失败。")
+            logger.info("通道1输出关闭失败。")
         time.sleep(1)
 
         # 批量设置通道2和通道3输出为开启
-        print("批量设置通道2和3输出为开启...")
+        logger.info("批量设置通道2和3输出为开启...")
         if module.set_multiple_outputs_state(2, [True, True]):
-            print("通道2和3批量开启成功。")
+            logger.info("通道2和3批量开启成功。")
         else:
-            print("通道2和3批量开启失败。")
+            logger.info("通道2和3批量开启失败。")
         time.sleep(1)
 
         # 获取输出状态
         output_states = module.get_output_states(1, 3) # 获取通道1到3的状态
         if output_states is not None:
-            print(f"通道1-3输出状态: {output_states}")
+            logger.info(f"通道1-3输出状态: {output_states}")
 
 
-        print("\n--- 模块参数设置和查询 ---")
+        logger.info("\n--- 模块参数设置和查询 ---")
         # 查询当前波特率设置
         current_baud_code = module.get_baudrate_setting()
         if current_baud_code is not None:
             baudrate_map_rev = {0: 4800, 1: 9600, 2: 14400, 3: 19200, 4: 38400, 5: 56000, 6: 57600, 7: 115200}
-            print(f"当前波特率设置代码: {current_baud_code} ({baudrate_map_rev.get(current_baud_code, '未知')})")
+            logger.info(f"当前波特率设置代码: {current_baud_code} ({baudrate_map_rev.get(current_baud_code, '未知')})")
 
         # 尝试设置 RS485 地址为 2 (注意：此操作需谨慎，因为设置后下次通信要用新地址)
-        # print("\n尝试设置 RS485 地址为 2 (此操作将改变模块地址，谨慎操作！)...")
+        # logger.info("\n尝试设置 RS485 地址为 2 (此操作将改变模块地址，谨慎操作！)...")
         # if module.set_rs485_address(2):
-        #     print("RS485 地址设置成功。")
+        #     logger.info("RS485 地址设置成功。")
         #     # 如果成功设置并生效，你需要更新 module 对象的 slave_id 或重新创建对象
         #     # module.slave_id = 2 # 如果设置立即生效，则需要更新
         #     # 或者 for next test: module = ZSDigitalIOModule(SERIAL_PORT, slave_id=2)
         # else:
-        #     print("RS485 地址设置失败。")
+        #     logger.info("RS485 地址设置失败。")
         # time.sleep(1)
 
         # 设置通讯检测时间为 5 秒 (即 50 * 0.1 = 5秒)
-        print("设置通讯检测时间为 5 秒...")
+        logger.info("设置通讯检测时间为 5 秒...")
         if module.set_communication_detection_time(5.0):
-            print("通讯检测时间设置成功。")
+            logger.info("通讯检测时间设置成功。")
         else:
-            print("通讯检测时间设置失败。")
+            logger.info("通讯检测时间设置失败。")
         time.sleep(1)
         detected_time = module.get_communication_detection_time()
         if detected_time is not None:
-            print(f"当前通讯检测时间设置: {detected_time} 秒")
+            logger.info(f"当前通讯检测时间设置: {detected_time} 秒")
 
         # 设置通道1为点动模式 (模式代码 2)
-        print("设置通道1为点动模式...")
+        logger.info("设置通道1为点动模式...")
         if module.set_channel_control_mode(1, 2):
-            print("通道1模式设置成功。")
+            logger.info("通道1模式设置成功。")
         else:
-            print("通道1模式设置失败。")
+            logger.info("通道1模式设置失败。")
         time.sleep(1)
 
         mode = module.get_channel_control_mode(1)
         if mode is not None:
-            print(f"通道1当前工作模式代码: {mode}")
+            logger.info(f"通道1当前工作模式代码: {mode}")
 
     else:
-        print("无法连接到中盛科技数字量输入输出模块。请检查串口配置、模块连接和电源。")
+        logger.info("无法连接到中盛科技数字量输入输出模块。请检查串口配置、模块连接和电源。")
 
     module.disconnect()

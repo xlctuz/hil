@@ -1,7 +1,7 @@
 import sys
 import os
 from PySide6.QtCore import QObject, Property, Slot, Signal
-from common.logger import logger
+from base.logger import logger
 import traceback
 
 # Add project root to path to import models
@@ -22,7 +22,7 @@ class ConfigViewModel(QObject):
     powerSupplyTestFailed = Signal(str)
     powerSupplyDataUpdated = Signal(list, list, list) # voltage, current, power
 
-    def __init__(self, project_management_use_case: ProjectManagement, 
+    def __init__(self, project_management_use_case: ProjectManagement,
                  power_supply_configuration_use_case: PowerSupplyConfiguration,
                  power_supply_adapter, power_supply_polling_service,
                  parent=None):
@@ -50,7 +50,7 @@ class ConfigViewModel(QObject):
         try:
             return list(rm.list_resources())
         except Exception as e:
-            print(f"Could not list VISA resources: {e}")
+            logger.info(f"Could not list VISA resources: {e}")
             return []
 
     @Slot(str, int)
@@ -60,18 +60,20 @@ class ConfigViewModel(QObject):
 
         # Use the use case to configure the power supply
         self.power_supply_configuration_use_case.configure_power_supply(
-            self._current_project.power_supply, 
-            resource_name, 
+            self._current_project.power_supply,
+            resource_name,
             baud_rate
         )
-        
+
+        self.project_management_use_case.save_project(self._current_project)
+
         self._current_project_proxy.powerSupply.resourceNameChanged.emit()
         self._current_project_proxy.powerSupply.baudRateChanged.emit()
 
     @Slot(int)
     def selectChannel(self, index):
         self._current_channel_index = index
-        print(f"Channel {index + 1} selected")
+        logger.info(f"Channel {index + 1} selected")
 
         # Use the use case to get projects for the selected channel
         projects = self.project_management_use_case.select_project(index)
@@ -87,12 +89,12 @@ class ConfigViewModel(QObject):
     def addProject(self, name):
         if not name:
             return
-            
-        print(f"Adding project {name} to channel {self._current_channel_index + 1}")
-        
+
+        logger.info(f"Adding project {name} to channel {self._current_channel_index + 1}")
+
         # Use the use case to add a new project
-        project = self.project_management_use_case.add_project(name, self._current_channel_index)
-        
+        self.project_management_use_case.add_project(name, self._current_channel_index)
+
         # Refresh the project list
         self.selectChannel(self._current_channel_index)
 
@@ -103,11 +105,13 @@ class ConfigViewModel(QObject):
 
         # Use the use case to set the voltage
         self.power_supply_configuration_use_case.set_power_supply_voltage(
-            self._current_project.power_supply, 
-            channel_index, 
+            self._current_project.power_supply,
+            channel_index,
             voltage
         )
-        
+
+        self.project_management_use_case.save_project(self._current_project)
+
         # Update UI
         self.currentProjectChanged.emit()
 
@@ -118,26 +122,29 @@ class ConfigViewModel(QObject):
 
         # Use the use case to set the current
         self.power_supply_configuration_use_case.set_power_supply_current(
-            self._current_project.power_supply, 
-            channel_index, 
+            self._current_project.power_supply,
+            channel_index,
             current
         )
-        
+
+        self.project_management_use_case.save_project(self._current_project)
+
         # Update UI
         self.currentProjectChanged.emit()
 
     @Slot(bool)
     def togglePowerSupplyTest(self, testing):
+        logger.info(f"toggle power supply test")
         if not self._current_project or not self._current_project.power_supply:
             msg = "没有为测试选择项目."
-            print(msg)
+            logger.info(msg)
             self.powerSupplyTestFailed.emit(msg)
             return
 
         ps_config = self._current_project.power_supply
         if not ps_config.resource_name:
             msg = "电源资源名称未配置."
-            print(msg)
+            logger.info(msg)
             self.powerSupplyTestFailed.emit(msg)
             return
 
@@ -160,28 +167,28 @@ class ConfigViewModel(QObject):
     @Slot()
     def resetPowerSupplySettings(self):
         if not self._current_project or not self._current_project.power_supply:
-            print("No project or power supply selected.")
+            logger.info("No project or power supply selected.")
             return
 
-        print(f"Resetting power supply settings for project {self._current_project.name}")
-        
+        logger.info(f"Resetting power supply settings for project {self._current_project.name}")
+
         # Use the use case to reset the settings
         self.power_supply_configuration_use_case.reset_power_supply_settings(self._current_project.power_supply)
-        
+
         # Update UI
         self.currentProjectChanged.emit()
 
     @Slot()
     def deleteCurrentProject(self):
         if not self._current_project:
-            print("No project selected to delete.")
+            logger.info("No project selected to delete.")
             return
 
-        print(f"Deleting project {self._current_project.name} (ID: {self._current_project.id})")
-        
+        logger.info(f"Deleting project {self._current_project.name} (ID: {self._current_project.id})")
+
         # Use the use case to delete the project
         self.project_management_use_case.delete_project(self._current_project)
-        
+
         # Refresh the project list for the current channel
         self.selectChannel(self._current_channel_index)
 
@@ -189,7 +196,7 @@ class ConfigViewModel(QObject):
     def selectProject(self, index):
         project = self._project_model.get_project(index)
         if project:
-            print(f"Project {project.id} selected")
+            logger.info(f"Project {project.id} selected")
             self._current_project = project
             self._current_project_proxy = ProjectProxy(project)
             self._project_model.set_checked(index)

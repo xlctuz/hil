@@ -142,7 +142,7 @@ class PowerSupplyAdapter:
 
     def close(self, power_supply: PowerSupply):
         if hasattr(power_supply, 'instrument') and power_supply.instrument:
-            print(f"close power supply")
+            logger.info(f"close power supply")
             power_supply.instrument.close()
 
     def _write(self, power_supply: PowerSupply, cmd):

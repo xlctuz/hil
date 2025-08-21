@@ -5,7 +5,7 @@ from .power_supply import PowerSupply
 from .pcie_1762h import Pcie1762h
 
 
-class ProjectORM(Base):
+class Project(Base):
     __tablename__ = 'projects'
 
     id = Column(Integer, primary_key=True)
@@ -20,17 +20,3 @@ class ProjectORM(Base):
 
     def __init__(self, name=""):
         self.name = name
-
-
-# Domain model classes
-class Project:
-    def __init__(self, name=""):
-        self.id = None
-        self.name = name
-        self.channel = None  # type: Channel
-        self.power_supply = None  # type: PowerSupply
-        self.pcie_1762h = None  # type: Pcie1762h
-
-
-# For backward compatibility
-Project = ProjectORM

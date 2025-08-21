@@ -58,17 +58,17 @@ Rectangle {
                     y: -24
                     text: qsTr("主页")
 
-                    Connections {
-                        target: tabButton
-                        function onClicked() {
-                            if (mainStack.currentItem != mainView) {
-                                mainStack.pop()
-                                if (backend && backend.mainViewModel) {
-                                    backend.mainViewModel.selectChannel(mainView.tabBarChannel.currentIndex)
-                                }
-                            }
-                        }
-                    }
+                    /* Connections { */
+                    /*     target: tabButton */
+                    /*     function onClicked() { */
+                    /*         if (mainStack.currentItem != mainView) { */
+                    /*             mainStack.pop() */
+                    /*             if (backend && backend.mainViewModel) { */
+                    /*                 backend.mainViewModel.selectChannel(mainView.tabBarChannel.currentIndex) */
+                    /*             } */
+                    /*         } */
+                    /*     } */
+                    /* } */
                 }
 
                 TabButton {
@@ -77,17 +77,17 @@ Rectangle {
                     y: -24
                     text: qsTr("配置")
 
-                    Connections {
-                        target: tabButton1
-                        function onClicked() {
-                            if (mainStack.currentItem != configView) {
-                                mainStack.push(configView)
-                                if (backend && backend.configViewModel) {
-                                    backend.configViewModel.selectChannel(configView.tabBarChannel.currentIndex)
-                                }
-                            }
-                        }
-                    }
+                    /* Connections { */
+                    /*     target: tabButton1 */
+                    /*     function onClicked() { */
+                    /*         if (mainStack.currentItem != configView) { */
+                    /*             mainStack.push(configView) */
+                    /*             if (backend && backend.configViewModel) { */
+                    /*                 backend.configViewModel.selectChannel(configView.tabBarChannel.currentIndex) */
+                    /*             } */
+                    /*         } */
+                    /*     } */
+                    /* } */
                 }
             }
 
@@ -122,19 +122,19 @@ Rectangle {
         Layout.fillWidth: true
         Layout.fillHeight: true
 
-        MyMainView {
-            id: mainView
-            anchors.fill: parent
-        }
-
-        MyConfigView {
-            id: configView
-            anchors.fill: parent
-        }
-        StackView {
+        StackLayout {
             id: mainStack
             anchors.fill: parent
-            initialItem: mainView
+            /* initialItem: mainView */
+            currentIndex: tabBar.currentIndex
+
+            MyMainView {
+                id: mainView
+            }
+
+            MyConfigView {
+                id: configView
+            }
         }
     }
 }

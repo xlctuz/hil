@@ -130,7 +130,7 @@ ColumnLayout {
                             id: textFieldProjectName
                             Layout.preferredWidth: 200
                             placeholderText: qsTr("项目名称")
-                            text: configViewModel && configViewModel.currentProject ? configViewModel.currentProject.name : ""
+                            text: configViewModel?.currentProject.name || ""
                             readOnly: true
                         }
 
@@ -225,7 +225,6 @@ ColumnLayout {
                                 id: it6302Config
                                 height: swipeView.height
                                 width: swipeView.width
-                                powerSupply: configViewModel && configViewModel.currentProject ? configViewModel.currentProject.powerSupply : null
                             }
 
                             MyPcie1762hConfig {

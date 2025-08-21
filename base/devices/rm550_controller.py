@@ -33,21 +33,21 @@ class RM550Controller:
                 timeout=self.timeout
             )
             if self.serial_port.is_open:
-                print(f"成功打开串口: {self.port}")
+                logger.info(f"成功打开串口: {self.port}")
                 # 清除可能存在的串口缓冲
                 self.serial_port.flushInput()
                 self.serial_port.flushOutput()
                 return True
             return False
         except serial.SerialException as e:
-            print(f"错误: 无法打开串口 {self.port} - {e}")
+            logger.info(f"错误: 无法打开串口 {self.port} - {e}")
             self.serial_port = None
             return False
 
     def connect(self):
         """建立与 RM550 模块的串口连接。"""
         if self.serial_port and self.serial_port.is_open:
-            print("串口已连接。")
+            logger.info("串口已连接。")
             return True
         return self._open_serial()
 
@@ -55,7 +55,7 @@ class RM550Controller:
         """断开与 RM550 模块的串口连接。"""
         if self.serial_port and self.serial_port.is_open:
             self.serial_port.close()
-            print("串口已断开。")
+            logger.info("串口已断开。")
             self.serial_port = None
             return True
         return False
@@ -74,7 +74,7 @@ class RM550Controller:
             str: 模块的响应字符串，如果超时或出错则返回 None。
         """
         if not self.serial_port or not self.serial_port.is_open:
-            print("错误: 串口未打开。请先调用 .connect() 方法。")
+            logger.info("错误: 串口未打开。请先调用 .connect() 方法。")
             return None
 
         full_command = command
@@ -92,7 +92,7 @@ class RM550Controller:
 
         try:
             self.serial_port.write(cmd_bytes)
-            # print(f"发送: {cmd_bytes.decode().strip()}") # 调试用
+            # logger.info(f"发送: {cmd_bytes.decode().strip()}") # 调试用
 
             response_buffer = b''
             start_time = time.time()
@@ -111,26 +111,26 @@ class RM550Controller:
                 time.sleep(0.01) # 短暂延时，避免CPU空转
 
             response_str = response_buffer.decode('ascii', errors='ignore').strip()
-            # print(f"接收: {response_str}") # 调试用
+            # logger.info(f"接收: {response_str}") # 调试用
 
             if expected_ok and "+OK." not in response_str:
-                print(f"警告: 指令 '{command}' 未返回 '+OK.'。 接收到: '{response_str}'")
+                logger.info(f"警告: 指令 '{command}' 未返回 '+OK.'。 接收到: '{response_str}'")
                 return None
 
             if response_prefix:
                 if response_prefix in response_str:
                     return response_str
                 else:
-                    print(f"警告: 指令 '{command}' 未找到预期前缀 '{response_prefix}'。接收到: '{response_str}'")
+                    logger.info(f"警告: 指令 '{command}' 未找到预期前缀 '{response_prefix}'。接收到: '{response_str}'")
                     return None
 
             return response_str
 
         except serial.SerialException as e:
-            print(f"串口通信错误: {e}")
+            logger.info(f"串口通信错误: {e}")
             return None
         except Exception as e:
-            print(f"发送AT指令时发生未知错误: {e}")
+            logger.info(f"发送AT指令时发生未知错误: {e}")
             return None
 
     ## --- ① 基础指令 ---
@@ -176,7 +176,7 @@ class RM550Controller:
                 value_str = response.split('=')[-1].strip()
                 return float(value_str)
             except (ValueError, IndexError):
-                print(f"错误: 无法解析 SP 查询响应: {response}")
+                logger.info(f"错误: 无法解析 SP 查询响应: {response}")
         return None
 
     def set_setpoint_resistance(self, resistance, sn=None):
@@ -235,7 +235,7 @@ class RM550Controller:
                 value_str = response.split('=')[-1].strip()
                 return float(value_str)
             except (ValueError, IndexError):
-                print(f"错误: 无法解析 RLIMIT 查询响应: {response}")
+                logger.info(f"错误: 无法解析 RLIMIT 查询响应: {response}")
         return None
 
     def set_min_output_limit(self, limit, sn=None):
@@ -266,7 +266,7 @@ class RM550Controller:
                 value_str = response.split('=')[-1].replace('C', '').strip() # 移除单位
                 return float(value_str)
             except (ValueError, IndexError):
-                print(f"错误: 无法解析环境温度响应: {response}")
+                logger.info(f"错误: 无法解析环境温度响应: {response}")
         return None
 
     def get_output_resistance_info(self, sn=None):
@@ -311,7 +311,7 @@ class RM550Controller:
                 value_str = response.split('=')[-1].strip()
                 return int(value_str)
             except (ValueError, IndexError):
-                print(f"错误: 无法解析继电器使用次数响应: {response}")
+                logger.info(f"错误: 无法解析继电器使用次数响应: {response}")
         return None
 
     def query_error_code(self, sn=None):
@@ -327,7 +327,7 @@ class RM550Controller:
                 # 示例: +DEV.ERRCODE=<null>
                 return response.split('=')[-1].strip()
             except IndexError:
-                print(f"错误: 无法解析错误代码响应: {response}")
+                logger.info(f"错误: 无法解析错误代码响应: {response}")
         return None
 
     def query_module_info(self, sn=None):
@@ -400,84 +400,84 @@ if __name__ == "__main__":
     rm550 = RM550Controller(SERIAL_PORT)
 
     if rm550.connect():
-        print("\n--- 测试基础指令 ---")
+        logger.info("\n--- 测试基础指令 ---")
         # 1. 干路 OPEN 继电器闭合
-        print("闭合 OPEN 继电器:", rm550.connect_main_path_relay())
+        logger.info("闭合 OPEN 继电器:", rm550.connect_main_path_relay())
         time.sleep(0.1)
 
         # 2. 查询 SP (设置点)
         sp = rm550.query_setpoint_resistance()
-        print(f"当前 SP: {sp} Ω")
+        logger.info(f"当前 SP: {sp} Ω")
         time.sleep(0.1)
 
         # 3. 设置 SP 为 100 Ω
-        print("设置 SP 为 100 Ω...")
+        logger.info("设置 SP 为 100 Ω...")
         response_set_sp = rm550.set_setpoint_resistance(100)
-        print("设置 SP 响应:", response_set_sp)
+        logger.info("设置 SP 响应:", response_set_sp)
         time.sleep(1) # 给模块一些时间响应和稳定
 
         # 4. 递增 SP 50 Ω
-        print("递增 SP 50 Ω...")
+        logger.info("递增 SP 50 Ω...")
         response_inc_sp = rm550.increase_setpoint_resistance(50)
-        print("递增 SP 响应:", response_inc_sp)
+        logger.info("递增 SP 响应:", response_inc_sp)
         time.sleep(1)
 
         # 5. 递减 SP 20 Ω
-        print("递减 SP 20 Ω...")
+        logger.info("递减 SP 20 Ω...")
         response_dec_sp = rm550.decrease_setpoint_resistance(20)
-        print("递减 SP 响应:", response_dec_sp)
+        logger.info("递减 SP 响应:", response_dec_sp)
         time.sleep(1)
 
         # 6. 查询最小输出限制值
         rlimit = rm550.query_min_output_limit()
-        print(f"当前最小输出限制值 (RLIMIT): {rlimit} Ω")
+        logger.info(f"当前最小输出限制值 (RLIMIT): {rlimit} Ω")
         time.sleep(0.1)
 
         # 7. 设置最小输出限制值 为 500 Ω
-        print("设置最小输出限制值 为 500 Ω...")
+        logger.info("设置最小输出限制值 为 500 Ω...")
         response_set_rlimit = rm550.set_min_output_limit(500)
-        print("设置 RLIMIT 响应:", response_set_rlimit)
+        logger.info("设置 RLIMIT 响应:", response_set_rlimit)
         time.sleep(1)
 
         # 8. 获取环境温度
         temp = rm550.get_ambient_temperature()
-        print(f"环境温度: {temp} °C")
+        logger.info(f"环境温度: {temp} °C")
         time.sleep(0.1)
 
         # 9. 获取输出电阻详细信息
         res_info = rm550.get_output_resistance_info()
-        print("输出电阻详细信息:", res_info)
+        logger.info("输出电阻详细信息:", res_info)
         time.sleep(0.1)
 
-        print("\n--- 测试模块信息查询 ---")
+        logger.info("\n--- 测试模块信息查询 ---")
         # 10. 查询继电器使用次数
         relay_count = rm550.query_relay_usage_count()
-        print(f"继电器使用次数: {relay_count}")
+        logger.info(f"继电器使用次数: {relay_count}")
         time.sleep(0.1)
 
         # 11. 查询错误代码
         err_code = rm550.query_error_code()
-        print(f"错误代码: {err_code}")
+        logger.info(f"错误代码: {err_code}")
         time.sleep(0.1)
 
         # 12. 查询模块综合信息
         module_info = rm550.query_module_info()
-        print("模块综合信息:", module_info)
+        logger.info("模块综合信息:", module_info)
         time.sleep(0.1)
 
-        print("\n--- 测试带序列号的指令 (如果模块支持且 S/N 正确) ---")
+        logger.info("\n--- 测试带序列号的指令 (如果模块支持且 S/N 正确) ---")
         # 示例：假设模块序列号是 MODULE_SN，尝试发送带 S/N 的指令
         if MODULE_SN:
-            print("尝试带 S/N 闭合 OPEN 继电器...")
+            logger.info("尝试带 S/N 闭合 OPEN 继电器...")
             response_sn = rm550.connect_main_path_relay(sn=MODULE_SN)
-            print("带 S/N 闭合响应:", response_sn)
+            logger.info("带 S/N 闭合响应:", response_sn)
             time.sleep(0.1)
 
-            print("尝试带 S/N 查询 SP...")
+            logger.info("尝试带 S/N 查询 SP...")
             sp_sn = rm550.query_setpoint_resistance(sn=MODULE_SN)
-            print(f"带 S/N 的 SP: {sp_sn} Ω")
+            logger.info(f"带 S/N 的 SP: {sp_sn} Ω")
 
     else:
-        print("无法连接到 RM550 模块。请检查串口配置和连接。")
+        logger.info("无法连接到 RM550 模块。请检查串口配置和连接。")
 
     rm550.disconnect()
