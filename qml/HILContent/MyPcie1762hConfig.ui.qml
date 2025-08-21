@@ -159,7 +159,7 @@ Pane {
                                                 if (radioButton.checked) {
                                                     if (pcie1762h) {
                                                         console.log(pcie1762h)
-                                                        pcie1762h.setDoChannelStatus(15 - index, "high")
+                                                        pcie1762h.setDoChannelStatus(15 - index, "HIGH")
                                                     }
                                                 }
                                             }
@@ -169,7 +169,7 @@ Pane {
                                             function onCheckedChanged() {
                                                 if (radioButton1.checked) {
                                                     if (pcie1762h) {
-                                                        pcie1762h.setDoChannelStatus(15 - index, "low")
+                                                        pcie1762h.setDoChannelStatus(15 - index, "LOW")
                                                     }
                                                 }
                                             }
@@ -179,7 +179,7 @@ Pane {
                                             function onCheckedChanged() {
                                                 if (radioButton2.checked) {
                                                     if (pcie1762h) {
-                                                        pcie1762h.setDoChannelStatus(15 - index, "na")
+                                                        pcie1762h.setDoChannelStatus(15 - index, "NA")
                                                     }
                                                 }
                                             }
@@ -219,7 +219,7 @@ Pane {
                                     id: rectangle2
                                     Layout.fillWidth: false
                                     Layout.fillHeight: false
-                                    state: pcie1762h?.doEchos?.[15-index].status || "na"
+                                    state: pcie1762h?.doEchos?.[15-index].status || "NA"
                                 }
                             }
                             Layout.fillWidth: true
@@ -260,7 +260,7 @@ Pane {
                                     id: rectangle1
                                     Layout.fillHeight: false
                                     Layout.fillWidth: false
-                                    state: pcie1762h?.diEchos?.[15-index].status || "na"
+                                    state: pcie1762h?.diEchos?.[15-index].status || "NA"
                                 }
                             }
                             Layout.fillWidth: true

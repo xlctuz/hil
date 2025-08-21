@@ -7,7 +7,7 @@ Rectangle {
     height: 30
     color: "#44ac34"
     radius: 15
-    state: "na"
+    state: "NA"
 
     Label {
         id: label1
@@ -20,7 +20,7 @@ Rectangle {
 
     states: [
         State {
-            name: "high"
+            name: "HIGH"
             PropertyChanges {
                 target: label1
                 text: qsTr("高")
@@ -31,7 +31,7 @@ Rectangle {
             }
         },
         State {
-            name: "low"
+            name: "LOW"
             PropertyChanges {
                 target: label1
                 text: qsTr("低")
@@ -42,7 +42,7 @@ Rectangle {
             }
         },
         State {
-            name: "na"
+            name: "NA"
             PropertyChanges {
                 target: label1
                 text: qsTr("NA")

@@ -73,7 +73,7 @@ class Pcie1762hProxy(QObject):
         self._di_channels = []
 
         self._do_echos = [DioEchoProxy(Status.NA) for i in range(16)]
-        self._di_echos = [DioEchoProxy(Status.LOW) for i in range(16)]
+        self._di_echos = [DioEchoProxy(Status.NA) for i in range(16)]
 
         if self._pcie_data:
             # sort channels by index
@@ -107,8 +107,7 @@ class Pcie1762hProxy(QObject):
             channel = next((ch for ch in self._pcie_data.do_channels if ch.index == index), None)
             if channel:
                 channel.name = name
-
-            use_cases.pcie1726h_config.save_do_channel_status(self._pcie_data, index, status_enum)
+                use_cases.pcie1726h_config.save(self._pcie_data)
 
     @Slot(int, str)
     def setDoChannelStatus(self, index, status):
@@ -118,7 +117,6 @@ class Pcie1762hProxy(QObject):
                 # Convert string to enum, handling case insensitivity
                 status_enum = Status(status.upper())
                 channel.status = status_enum
-
                 use_cases.pcie1726h_config.save(self._pcie_data)
 
     @Slot()
