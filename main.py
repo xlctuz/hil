@@ -29,14 +29,8 @@ from base.devices.pcie_1762h_adapter import Pcie1762hAdapter
 from base.devices.power_supply_polling_service_adapter import PowerSupplyPollingServiceAdapter
 
 # Import core use cases
-from core.use_cases.select_project import SelectProject
-from core.use_cases.configure_power_supply import ConfigurePowerSupply
-from core.use_cases.add_project import AddProject
-from core.use_cases.delete_project import DeleteProject
-from core.use_cases.set_power_supply_voltage import SetPowerSupplyVoltage
-from core.use_cases.set_power_supply_current import SetPowerSupplyCurrent
-from core.use_cases.reset_power_supply_settings import ResetPowerSupplySettings
-from core.use_cases.toggle_power_supply_test import TogglePowerSupplyTest
+from core.use_cases.project_management import ProjectManagement
+from core.use_cases.power_supply_management import PowerSupplyConfiguration
 
 # Import UI components
 from ui.main_view_model import MainViewModel
@@ -53,29 +47,16 @@ class App:
         self.power_supply_polling_service = PowerSupplyPollingServiceAdapter()
         
         # Initialize use cases
-        self.select_project_use_case = SelectProject(self.project_repository)
-        self.configure_power_supply_use_case = ConfigurePowerSupply()
-        self.add_project_use_case = AddProject(self.project_repository)
-        self.delete_project_use_case = DeleteProject(self.project_repository)
-        self.set_power_supply_voltage_use_case = SetPowerSupplyVoltage()
-        self.set_power_supply_current_use_case = SetPowerSupplyCurrent()
-        self.reset_power_supply_settings_use_case = ResetPowerSupplySettings()
-        self.toggle_power_supply_test_use_case = TogglePowerSupplyTest(
-            self.power_supply_adapter,
-            self.power_supply_polling_service
-        )
+        self.project_management_use_case = ProjectManagement(self.project_repository)
+        self.power_supply_configuration_use_case = PowerSupplyConfiguration()
         
         # Initialize view models
-        self._main_view_model = MainViewModel(self.select_project_use_case)
+        self._main_view_model = MainViewModel(self.project_management_use_case)
         self._config_view_model = ConfigViewModel(
-            self.select_project_use_case,
-            self.configure_power_supply_use_case,
-            self.add_project_use_case,
-            self.delete_project_use_case,
-            self.set_power_supply_voltage_use_case,
-            self.set_power_supply_current_use_case,
-            self.reset_power_supply_settings_use_case,
-            self.toggle_power_supply_test_use_case
+            self.project_management_use_case,
+            self.power_supply_configuration_use_case,
+            self.power_supply_adapter,
+            self.power_supply_polling_service
         )
         
         # Initialize database

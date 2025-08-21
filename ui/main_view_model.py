@@ -1,5 +1,5 @@
 from PySide6.QtCore import QObject, Property, Slot, Signal
-from core.use_cases.select_project import SelectProject
+from core.use_cases.project_management import ProjectManagement
 from base.models.project import Project
 from base.models.channel import Channel
 from ui.project_model import ProjectModel
@@ -10,9 +10,9 @@ from typing import List
 class MainViewModel(QObject):
     currentProjectChanged = Signal()
 
-    def __init__(self, select_project_use_case: SelectProject, parent=None):
+    def __init__(self, project_management_use_case: ProjectManagement, parent=None):
         super().__init__(parent)
-        self.select_project_use_case = select_project_use_case
+        self.project_management_use_case = project_management_use_case
         self._project_model = ProjectModel()
         self._current_project = None
         self._current_project_proxy = ProjectProxy(None)
@@ -32,7 +32,7 @@ class MainViewModel(QObject):
         print(f"Channel {index + 1} selected")
         
         # Use the use case to get projects for the selected channel
-        projects = self.select_project_use_case.execute(index)
+        projects = self.project_management_use_case.select_project(index)
         self._project_model.set_projects(projects)
 
         self._current_project = None
