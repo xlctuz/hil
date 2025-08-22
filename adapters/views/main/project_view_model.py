@@ -51,6 +51,7 @@ class ProjectViewModel(QObject):
     def is_started(self):
         return self._is_started
 
+
     @Slot(result=bool)
     def start(self):
         """Start the project: configure hardware devices and start monitoring"""
@@ -106,32 +107,35 @@ class ProjectViewModel(QObject):
         try:
             power_supply = self._project_data.power_supply
             # Create a temporary power supply object for configuration
-            from core.entities.power_supply import PowerSupply
+            from core.entities.power_supply import PowerSupply, Channel
             temp_power_supply = PowerSupply(power_supply.resource_name, power_supply.baud_rate)
 
             # Open connection
-            # Note: In the main view, we don't have access to usecases, so we need to import the adapter directly
-            from adapters.devices.power_supply_adapter import PowerSupplyAdapter
-            adapter = PowerSupplyAdapter()
-            adapter.open(temp_power_supply)
+            self.usecases.power_supply_port.open(temp_power_supply)
 
             try:
+                # Map channel indices to Channel enum values
+                channel_map = {0: Channel.CH1, 1: Channel.CH2, 2: Channel.CH3}
+                
                 # Configure each channel
                 for channel in power_supply.channels:
                     if channel.voltage is not None and channel.current is not None:
+                        # Get the corresponding Channel enum value
+                        channel_enum = channel_map.get(channel.index, Channel.CH1)
+                        
                         # Apply voltage and current settings
-                        adapter.set_voltage_current(
+                        self.usecases.power_supply_port.set_voltage_current(
                             temp_power_supply,
-                            channel.index + 1,  # Channel numbering starts from 1
+                            channel_enum,
                             channel.voltage,
                             channel.current
                         )
 
                 # Turn on power supply
-                adapter.set_on_off(temp_power_supply, IO.ON)
+                self.usecases.power_supply_port.set_on_off(temp_power_supply, IO.ON)
             finally:
                 # Close connection
-                adapter.close(temp_power_supply)
+                self.usecases.power_supply_port.close(temp_power_supply)
         except Exception as e:
             raise Exception(f"配置电源失败: {str(e)}")
 
@@ -154,20 +158,18 @@ class ProjectViewModel(QObject):
         try:
             power_supply = self._project_data.power_supply
             # Create a temporary power supply object for configuration
-            from core.entities.power_supply import PowerSupply
+            from core.entities.power_supply import PowerSupply, Channel
             temp_power_supply = PowerSupply(power_supply.resource_name, power_supply.baud_rate)
 
             # Open connection
-            from adapters.devices.power_supply_adapter import PowerSupplyAdapter
-            adapter = PowerSupplyAdapter()
-            adapter.open(temp_power_supply)
+            self.usecases.power_supply_port.open(temp_power_supply)
 
             try:
                 # Turn off power supply
-                adapter.set_on_off(temp_power_supply, IO.OFF)
+                self.usecases.power_supply_port.set_on_off(temp_power_supply, IO.OFF)
             finally:
                 # Close connection
-                adapter.close(temp_power_supply)
+                self.usecases.power_supply_port.close(temp_power_supply)
         except Exception as e:
             logger.error(f"Error turning off power supply: {str(e)}")
 
@@ -177,35 +179,12 @@ class ProjectViewModel(QObject):
             return
 
         try:
-            # For the main view, we'll create a simple poller that reads data on demand
-            # In a more complete implementation, this would use the same use case pattern as the config view
-            from adapters.devices.power_supply_poller import PowerSupplyPoller
-            from PySide6.QtCore import QThread
-            
-            # Create and configure power supply poller
-            power_supply = self._project_data.power_supply
-            self._power_supply_poller = PowerSupplyPoller(
-                power_supply.resource_name,
-                power_supply.baud_rate,
-                self._project_data
+            # Use the use case to start power supply monitoring
+            self._power_supply_poller, self._poller_thread = self.usecases.start_power_supply_monitoring(
+                self._project_data,
+                self._on_power_data_polled,
+                self._on_polling_error
             )
-
-            # Connect signals
-            self._power_supply_poller.polledData.connect(self._on_power_data_polled)
-            self._power_supply_poller.error.connect(self._on_polling_error)
-
-            # Move poller to a separate thread
-            self._poller_thread = QThread()
-            self._power_supply_poller.moveToThread(self._poller_thread)
-
-            # Connect thread signals
-            self._poller_thread.started.connect(self._power_supply_poller.start)
-            self._power_supply_poller.finished.connect(self._poller_thread.quit)
-            self._power_supply_poller.finished.connect(self._power_supply_poller.deleteLater)
-            self._poller_thread.finished.connect(self._poller_thread.deleteLater)
-
-            # Start the thread
-            self._poller_thread.start()
 
             # Start DIO monitoring with a timer
             self._start_dio_monitoring()
@@ -234,14 +213,8 @@ class ProjectViewModel(QObject):
     def _stop_monitoring(self):
         """Stop monitoring power supply and DIO status"""
         try:
-            # Stop power supply poller
-            if self._power_supply_poller:
-                self._power_supply_poller.stop()
-
-            # Wait for thread to finish
-            if self._poller_thread and self._poller_thread.isRunning():
-                self._poller_thread.quit()
-                self._poller_thread.wait()
+            # Use the use case to stop power supply monitoring
+            self.usecases.stop_power_supply_monitoring(self._power_supply_poller, self._poller_thread)
 
             # Stop DIO monitoring
             self._stop_dio_monitoring()

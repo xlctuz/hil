@@ -1,5 +1,6 @@
 from core.repositories import Repository
-from adapters.devices.power_supply_adapter import PowerSupplyAdapter
+from core.interfaces.power_supply_port import PowerSupplyPort
+from core.interfaces.scheduler_port import SchedulerPort
 from .select_project import SelectProject
 from .init_channels import Init_channels
 from .add_project import Add_project
@@ -17,9 +18,10 @@ from .read_power_supply_data import ReadPowerSupplyData
 
 
 class UseCases:
-    def __init__(self, repository: Repository):
-        # Initialize adapters
-        self.power_supply_adapter = PowerSupplyAdapter()
+    def __init__(self, repository: Repository, power_supply_port: PowerSupplyPort, scheduler_port: SchedulerPort):
+        # Store the ports
+        self.power_supply_port = power_supply_port
+        self.scheduler_port = scheduler_port
         
         # Project management
         self.select_project_from_channel = SelectProject(repository.project)
@@ -41,6 +43,10 @@ class UseCases:
         self.toggle_power_supply_test = TogglePowerSupplyTest()
         
         # Power supply monitoring
-        self.start_power_supply_monitoring = StartPowerSupplyMonitoring(self.power_supply_adapter)
+        self.read_power_supply_data = ReadPowerSupplyData(power_supply_port)
+        self.start_power_supply_monitoring = StartPowerSupplyMonitoring(
+            power_supply_port, 
+            scheduler_port,
+            self.read_power_supply_data
+        )
         self.stop_power_supply_monitoring = StopPowerSupplyMonitoring()
-        self.read_power_supply_data = ReadPowerSupplyData(self.power_supply_adapter)

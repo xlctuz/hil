@@ -1,13 +1,9 @@
 from core.logger import logger
+from core.interfaces.scheduler_port import SchedulerPort
 
 
 class StopPowerSupplyMonitoring:
-    def __call__(self, poller, thread):
-        if poller:
-            logger.info("Stopping power supply poller")
-            poller.stop()
-
-        if thread and thread.isRunning():
-            logger.info("Waiting for poller thread to finish")
-            thread.quit()
-            thread.wait()
+    def __call__(self, scheduler: SchedulerPort):
+        if scheduler:
+            logger.info("Stopping power supply monitoring")
+            scheduler.stop_polling()

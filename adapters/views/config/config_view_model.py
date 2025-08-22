@@ -13,6 +13,7 @@ from adapters.devices.visa_resource_manager import rm
 from adapters.views.common.project_list_view_model import ProjectListViewModel
 from adapters.views.config.project_config_view_model import ProjectConfigViewModel
 from core.usecases import UseCases
+from core.interfaces.scheduler_port import SchedulerPort
 
 class ConfigViewModel(QObject):
     currentChannelChanged = Signal(int)
@@ -20,17 +21,18 @@ class ConfigViewModel(QObject):
     powerSupplyTestFailed = Signal(str)
     powerSupplyDataUpdated = Signal(list, list, list) # voltage, current, power
 
-    def __init__(self, usecases: UseCases, power_supply_adapter, power_supply_polling_service,
+    def __init__(self, usecases: UseCases, power_supply_adapter, scheduler_port: SchedulerPort,
                  parent=None):
         super().__init__(parent)
         self.usecases = usecases
         self.power_supply_adapter = power_supply_adapter
-        self.power_supply_polling_service = power_supply_polling_service
+        self.scheduler_port = scheduler_port
 
         self._project_model = ProjectListViewModel()
         self._current_project = None
         self._current_project_proxy = ProjectConfigViewModel(usecases, None)
         self._current_channel_index = 0
+        self._is_testing = False
 
     @Property(QObject, constant=True)
     def projectsModel(self):
@@ -143,16 +145,31 @@ class ConfigViewModel(QObject):
             self.powerSupplyTestFailed.emit(msg)
             return
 
-        # Use the use case to toggle the test
-        self.usecases.toggle_power_supply_test(
-            ps_config,
-            self._current_project,
-            testing,
-            self.power_supply_adapter,
-            self.power_supply_polling_service,
-            self._on_power_supply_data_updated,
-            self.powerSupplyTestFailed.emit
-        )
+        # Store the testing state
+        self._is_testing = testing
+
+        if testing:
+            # Start monitoring using the use case
+            try:
+                self.usecases.start_power_supply_monitoring(
+                    self._current_project,
+                    self._on_power_supply_data_updated,
+                    self.powerSupplyTestFailed.emit
+                )
+            except Exception as e:
+                msg = f"启动电源监控失败: {str(e)}"
+                logger.info(msg)
+                self.powerSupplyTestFailed.emit(msg)
+                return
+        else:
+            # Stop monitoring using the use case
+            try:
+                self.usecases.stop_power_supply_monitoring(self.scheduler_port)
+            except Exception as e:
+                msg = f"停止电源监控失败: {str(e)}"
+                logger.info(msg)
+                self.powerSupplyTestFailed.emit(msg)
+                return
 
     @Slot(dict)
     def _on_power_supply_data_updated(self, data):

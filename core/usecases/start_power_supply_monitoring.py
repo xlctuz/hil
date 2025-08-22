@@ -1,14 +1,14 @@
 from core.entities.project import Project
-from core.entities.power_supply import PowerSupply
 from core.logger import logger
-from adapters.devices.power_supply_adapter import PowerSupplyAdapter
-from adapters.devices.power_supply_poller import PowerSupplyPoller
-from PySide6.QtCore import QThread
+from core.interfaces.power_supply_port import PowerSupplyPort
+from core.interfaces.scheduler_port import SchedulerPort
 
 
 class StartPowerSupplyMonitoring:
-    def __init__(self, power_supply_adapter: PowerSupplyAdapter):
-        self.power_supply_adapter = power_supply_adapter
+    def __init__(self, power_supply_port: PowerSupplyPort, scheduler_port: SchedulerPort, read_power_supply_data_usecase):
+        self.power_supply_port = power_supply_port
+        self.scheduler_port = scheduler_port
+        self.read_power_supply_data_usecase = read_power_supply_data_usecase
 
     def __call__(self, project: Project, data_callback=None, error_callback=None):
         logger.info(f"Starting power supply monitoring for project {project.name} (ID: {project.id})")
@@ -16,31 +16,22 @@ class StartPowerSupplyMonitoring:
         if not project.power_supply:
             raise ValueError("Project has no power supply configuration")
 
-        # Create and configure power supply poller
-        power_supply = project.power_supply
-        poller = PowerSupplyPoller(
-            power_supply.resource_name,
-            power_supply.baud_rate,
-            project
-        )
+        # Define the polling function
+        def poll_data():
+            try:
+                # Read power supply data using the use case
+                data = self.read_power_supply_data_usecase(project)
+                
+                # Call the data callback with the read data
+                if data_callback:
+                    data_callback(data)
+            except Exception as e:
+                # Call the error callback if an exception occurs
+                if error_callback:
+                    error_callback(f"Error polling power supply: {str(e)}")
 
-        # Create a thread for the poller
-        thread = QThread()
-        poller.moveToThread(thread)
+        # Start the scheduler with a 1-second interval
+        self.scheduler_port.start_polling(1.0, poll_data)
 
-        # Connect signals
-        if data_callback:
-            poller.polledData.connect(data_callback)
-        if error_callback:
-            poller.error.connect(error_callback)
-
-        # Connect thread signals
-        thread.started.connect(poller.start)
-        poller.finished.connect(thread.quit)
-        poller.finished.connect(poller.deleteLater)
-        thread.finished.connect(thread.deleteLater)
-
-        # Start the thread
-        thread.start()
-
-        return poller, thread
+        # Return the scheduler so it can be stopped later
+        return self.scheduler_port

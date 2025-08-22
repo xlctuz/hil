@@ -2,7 +2,6 @@
 import os
 import sys
 # import resources_rc
-from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtQml import QQmlDebuggingEnabler
@@ -22,7 +21,6 @@ from core.entities.power_supply import PowerSupply
 from core.entities.pcie_1762h import Pcie1762h
 from core.database import Base
 
-from core.database import engine, Session
 from core.repositories import Repository
 from core.usecases import UseCases
 
@@ -33,68 +31,100 @@ from adapters.views.main.main_view_model import MainViewModel
 from adapters.views.config.config_view_model import ConfigViewModel
 from adapters.views.backend_adapter import BackendAdapter
 
+from core.usecases.mocks.mock_power_supply_adapter import MockPowerSupplyAdapter
 
-class App:
-    def __init__(self):
-        # Initialize infrastructure components
-        self.power_supply_adapter = PowerSupplyAdapter()
-        self.pcie_1762h_adapter = Pcie1762hAdapter()
-        self.power_supply_polling_service = PowerSupplyPollingServiceAdapter()
+# class App:
+#     def __init__(self):
+#         # Initialize infrastructure components
+#         self.power_supply_adapter = PowerSupplyAdapter()
+#         self.pcie_1762h_adapter = Pcie1762hAdapter()
+#         self.power_supply_polling_service = PowerSupplyPollingServiceAdapter()
 
-        self.repository = Repository()
-        self.usecases = UseCases(self.repository)
+#         self.repository = Repository()
+#         self.usecases = UseCases(self.repository)
 
-        # Initialize view models
-        self._main_view_model = MainViewModel(self.usecases)
-        self._config_view_model = ConfigViewModel(
-            self.usecases,
-            self.power_supply_adapter,
-            self.power_supply_polling_service
-        )
+#         # Initialize view models
+#         self._main_view_model = MainViewModel(self.usecases)
+#         self._config_view_model = ConfigViewModel(
+#             self.usecases,
+#             self.power_supply_adapter,
+#             self.power_supply_polling_service
+#         )
 
-        # Initialize database
-        self._initialize_database()
+#         # Initialize database
+#         self._initialize_database()
 
-    def _initialize_database(self):
-        # Create tables
-        Base.metadata.create_all(engine)
+#     def _initialize_database(self):
+#         # Create tables
+#         Base.metadata.create_all(engine)
 
-        self.usecases.init_channels()
-
-
+#         self.usecases.init_channels()
 
 
-    @property
-    def mainViewModel(self):
-        return self._main_view_model
 
-    @property
-    def configViewModel(self):
-        return self._config_view_model
 
+#     @property
+#     def mainViewModel(self):
+#         return self._main_view_model
+
+#     @property
+#     def configViewModel(self):
+#         return self._config_view_model
+
+
+from PySide6.QtQml import QQmlApplicationEngine
+from PySide6.QtWidgets import QApplication
+import sys
+import os
+
+# Add the project root directory to the Python path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from core.repositories import Repository
+from core.usecases import UseCases
+from adapters.views.backend_adapter import BackendAdapter
+from adapters.views.main.main_view_model import MainViewModel
+from adapters.views.config.config_view_model import ConfigViewModel
+from adapters.devices.power_supply_adapter import PowerSupplyAdapter
+from adapters.schedulers.qt_scheduler_adapter import QtSchedulerAdapter
+from core.usecases.mocks.mock_power_supply_adapter import MockPowerSupplyAdapter
 
 if __name__ == "__main__":
+    # Create QML application
     app = QApplication(sys.argv)
 
-    logger.info("main")
+    # Create core components
+    repository = Repository()
+    if 0:
+        power_supply_adapter = PowerSupplyAdapter()
+    else:
+        power_supply_adapter = MockPowerSupplyAdapter()
+    scheduler_adapter = QtSchedulerAdapter()
+    use_cases = UseCases(repository, power_supply_adapter, scheduler_adapter)
 
-    # Create the application components
-    app_instance = App()
+    # Initialize channels if needed
+    use_cases.init_channels()
 
-    # Create the QML backend adapter
-    backend = BackendAdapter(
-        app_instance.mainViewModel,
-        app_instance.configViewModel
-    )
+    # Create view models
+    main_view_model = MainViewModel(use_cases)
+    config_view_model = ConfigViewModel(use_cases, power_supply_adapter, scheduler_adapter)
 
-    appEngine = QQmlApplicationEngine()
-    appEngine.addImportPath(os.path.join(os.path.dirname(__file__), "qml/"))
+    # Create backend adapter
+    backend_adapter = BackendAdapter(main_view_model, config_view_model)
 
-    appEngine.rootContext().setContextProperty("backend", backend)
+    # Create QML engine and set context properties
+    engine = QQmlApplicationEngine()
+    engine.addImportPath(os.path.join(os.path.dirname(__file__), "qml/"))
+    engine.rootContext().setContextProperty("backend", backend_adapter)
+    engine.load(os.path.join(os.path.dirname(__file__), "qml/HILContent/App.qml"))
 
-    appEngine.load(os.path.join(os.path.dirname(__file__), "qml/HILContent/App.qml"))
+    # Load the main QML file
+    qml_file = os.path.join(os.path.dirname(__file__), "qml", "main.qml")
+    engine.load(qml_file)
 
-    if not appEngine.rootObjects():
+    # Check if the QML file was loaded successfully
+    if not engine.rootObjects():
         sys.exit(-1)
 
+    # Run the application
     sys.exit(app.exec())

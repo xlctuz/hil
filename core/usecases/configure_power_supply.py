@@ -1,5 +1,6 @@
 from core.entities.power_supply import PowerSupply
 from core.logger import logger
+from core.interfaces.power_supply_port import PowerSupplyPort
 
 
 class ConfigurePowerSupply:

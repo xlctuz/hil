@@ -1,3 +1,4 @@
+from core.interfaces.power_supply_port import PowerSupplyPort
 from core.entities.power_supply import PowerSupply, IO, Channel, PowerSupplyError, ParameterError
 import pyvisa
 from contextlib import contextmanager
@@ -129,7 +130,7 @@ class PowerSupplyCommand:
             return self
 
 
-class PowerSupplyAdapter:
+class PowerSupplyAdapter(PowerSupplyPort):
     def open(self, power_supply: PowerSupply):
         power_supply.instrument = rm.open_resource(power_supply.resource_name)
         power_supply.instrument.baud_rate = power_supply.baud_rate
