@@ -11,41 +11,41 @@ class ReadPowerSupplyData:
 
     def __call__(self, project: Project):
         logger.info(f"Reading power supply data for project {project.name} (ID: {project.id})")
-        
+
         if not project.power_supply:
             raise ValueError("Project has no power supply configuration")
 
         voltage_data = []
         current_data = []
         power_data = []
-        
+
         # Create a temporary power supply object for reading data
         power_supply = PowerSupply(project.power_supply.resource_name, project.power_supply.baud_rate)
-        
+
         try:
             # Open connection
             self.power_supply_port.open(power_supply)
-            
+
             # Read data for each channel
             # Map channel indices to Channel enum values
             channel_map = {0: Channel.CH1, 1: Channel.CH2, 2: Channel.CH3}
-            
+
             for channel in project.power_supply.channels:
                 try:
                     # Get the corresponding Channel enum value
                     channel_enum = channel_map.get(channel.index, Channel.CH1)
-                    
+
                     # Measure voltage
                     voltage_str = self.power_supply_port.measure_voltage(power_supply, channel_enum)
                     voltage = float(voltage_str.strip())
-                    
+
                     # Measure current
                     current_str = self.power_supply_port.measure_current(power_supply, channel_enum)
                     current = float(current_str.strip())
-                    
+
                     # Calculate power
                     power = voltage * current
-                    
+
                     # Add data to lists
                     voltage_data.append(voltage)
                     current_data.append(current)
@@ -59,7 +59,7 @@ class ReadPowerSupplyData:
         finally:
             # Close connection
             self.power_supply_port.close(power_supply)
-        
+
         # Return the data as a dictionary
         return {
             'voltage': voltage_data,
