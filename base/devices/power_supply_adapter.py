@@ -2,6 +2,7 @@ from base.models.power_supply import PowerSupply, IO, Channel, PowerSupplyError,
 import pyvisa
 from contextlib import contextmanager
 from .visa_resource_manager import rm
+from base.logger import logger
 
 
 # These command classes are moved from the original power_supply_it6302.py

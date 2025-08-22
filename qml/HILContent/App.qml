@@ -47,7 +47,7 @@ Window {
     /*     } */
     /* } */
     
-    // Add connection for power supply data updates
+    /* Add connection for power supply data updates */
     /* Connections { */
     /*     target: backend?.configViewModel */
     /*     function onPowerSupplyDataUpdated(voltage, current, power) { */

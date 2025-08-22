@@ -48,7 +48,7 @@ Pane {
             Button {
                 id: button
                 text: qsTr("启用")
-                checked: false
+                checked: currentProj?.is_started || false
                 checkable: true
                 state: ""
                 enabled: currentProj
@@ -59,12 +59,13 @@ Pane {
                 target: button
                 function onClicked() {
                     if (currentProj && !currentProj.is_started) {
-                        currentProj.start()
-                        target.checked = true
+                        if (currentProj.start()) {
+                            /* target.checked = true */
+                        }
                     }
                     else if (currentProj) {
                         currentProj.stop()
-                        target.checked = false
+                        /* target.checked = false */
                     }
                 }
             }
