@@ -9,33 +9,29 @@ from PySide6.QtQml import QQmlDebuggingEnabler
 QQmlDebuggingEnabler.enableDebugging(True)
 from PySide6.QtCharts import QChartView, QChart, QLineSeries
 import qml.resources_rc
-from base.logger import logger
+from core.logger import logger
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Import core models for database initialization
 # We need to import the ORM models from their new location in base
 # These are used only for database initialization
-from base.models.project import Project
-from base.models.power_supply import PowerSupply
-from base.models.pcie_1762h import Pcie1762h
-from base.database import Base
+from core.entities.channel import Channel
+from core.entities.project import Project
+from core.entities.power_supply import PowerSupply
+from core.entities.pcie_1762h import Pcie1762h
+from core.database import Base
 
-# Import base components
-from base.database import engine, Session
-from base.devices.power_supply_adapter import PowerSupplyAdapter
-from base.devices.pcie_1762h_adapter import Pcie1762hAdapter
-from base.devices.power_supply_polling_service_adapter import PowerSupplyPollingServiceAdapter
-from base.repositories import repository
+from core.database import engine, Session
+from core.repositories import Repository
+from core.usecases import UseCases
 
-# Import core use cases
-from core.use_cases.project_management import ProjectManagement
-from core.use_cases.power_supply_management import PowerSupplyConfiguration
-
-# Import UI components
-from ui.main_view_model import MainViewModel
-from ui.config_view_model import ConfigViewModel
-from ui.backend_adapter import BackendAdapter
+from adapters.devices.power_supply_adapter import PowerSupplyAdapter
+from adapters.devices.pcie_1762h_adapter import Pcie1762hAdapter
+from adapters.devices.power_supply_polling_service_adapter import PowerSupplyPollingServiceAdapter
+from adapters.views.main.main_view_model import MainViewModel
+from adapters.views.config.config_view_model import ConfigViewModel
+from adapters.views.backend_adapter import BackendAdapter
 
 
 class App:
@@ -45,9 +41,13 @@ class App:
         self.pcie_1762h_adapter = Pcie1762hAdapter()
         self.power_supply_polling_service = PowerSupplyPollingServiceAdapter()
 
+        self.repository = Repository()
+        self.usecases = UseCases(self.repository)
+
         # Initialize view models
-        self._main_view_model = MainViewModel()
+        self._main_view_model = MainViewModel(self.usecases)
         self._config_view_model = ConfigViewModel(
+            self.usecases,
             self.power_supply_adapter,
             self.power_supply_polling_service
         )
@@ -58,6 +58,10 @@ class App:
     def _initialize_database(self):
         # Create tables
         Base.metadata.create_all(engine)
+
+        self.usecases.init_channels()
+
+
 
 
     @property
