@@ -131,5 +131,22 @@ class Pcie1762hViewModel(QObject):
     @Slot()
     def test(self):
         logger.info(f"test")
-        # TODO: Implement test logic with Pcie1762hPort
-        pass
+        if self._pcie_data:
+            try:
+                # Use the use case to test the PCIE-1762H device
+                di_data = self.usecases.test_pcie_1762h(self._pcie_data)
+                
+                # Update DI echo channels with the returned data
+                for i in range(16):
+                    # Extract bit i from di_data
+                    bit_value = (di_data >> i) & 1
+                    status = Status.HIGH if bit_value else Status.LOW
+                    
+                    # Update the echo channel
+                    if i < len(self._di_echos):
+                        self._di_echos[i].status = status.value
+                        
+                logger.info(f"PCIE-1762H test completed, DI data: {di_data}")
+            except Exception as e:
+                logger.error(f"Error testing PCIE-1762H: {e}")
+                # TODO: Handle error in UI

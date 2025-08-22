@@ -12,8 +12,10 @@ from adapters.views.backend_adapter import BackendAdapter
 from adapters.views.main.main_view_model import MainViewModel
 from adapters.views.config.config_view_model import ConfigViewModel
 from adapters.devices.power_supply_adapter import PowerSupplyAdapter
+from adapters.devices.pcie_1762h_adapter import Pcie1762hAdapter
 from adapters.schedulers.qt_scheduler_adapter import QtSchedulerAdapter
 from core.usecases.mocks.mock_power_supply_adapter import MockPowerSupplyAdapter
+from core.usecases.mocks.mock_pcie_1762h_adapter import MockPcie1762hAdapter
 
 if __name__ == "__main__":
     # Create QML application
@@ -23,10 +25,12 @@ if __name__ == "__main__":
     repository = Repository()
     if 0:
         power_supply_adapter = PowerSupplyAdapter()
+        pcie_1762h_adapter = Pcie1762hAdapter()
     else:
         power_supply_adapter = MockPowerSupplyAdapter()
+        pcie_1762h_adapter = MockPcie1762hAdapter()
     scheduler_adapter = QtSchedulerAdapter()
-    use_cases = UseCases(repository, power_supply_adapter, scheduler_adapter)
+    use_cases = UseCases(repository, power_supply_adapter, scheduler_adapter, pcie_1762h_adapter)
 
     # Initialize channels if needed
     use_cases.init_channels()

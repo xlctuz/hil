@@ -1,56 +1,54 @@
+from core.interfaces.pcie_1762h_port import Pcie1762hPort
 from core.entities.pcie_1762h import Pcie1762h, Status
-import time
+from Automation.BDaq import *
+from core.logger import logger
+import traceback
 
 
-deviceDescription = "PCIE-1762H,BID#0"
-profilePath = u"pcie-1762h.xml"
-startPort = 0
-portCount = 1
+class Pcie1762hAdapter(Pcie1762hPort):
+    def __init__(self):
+        # Device configuration
+        self.device_description = "PCI-1762,BID#0"
+        self.start_channel = 0
+        self.channel_count = 16
 
-
-class Pcie1762hAdapter:
     def run_test(self, pcie_1762h: Pcie1762h):
-        from Automation.BDaq.InstantDoCtrl import InstantDoCtrl
+        '''Run a test on the PCIE-1762H device'''
+        # Create an instance of the instant digital output
+        instant_do = InstantDoCtrl()
 
-        instantDoCtrl = None
-        try:
-            instantDoCtrl = InstantDoCtrl(deviceDescription)
-            instantDoCtrl.loadProfile = profilePath
+        # Set the device description
+        instant_do.selectedDevice = DeviceInformation(self.device_description)
 
-            port = instantDoCtrl.readAny(0, 2)[1]
-            for c in pcie_1762h.do_channels:
-                i = c.index // 8
-                j = c.index % 8
-                if c.status == Status.HIGH:
-                    port[i] |= 1 << j
-                elif c.status == Status.LOW:
-                    port[i] &= ~(1 << j)
+        # Prepare the data to write (set all DO channels based on pcie_1762h configuration)
+        data = 0  # Start with all channels low
+        for channel in pcie_1762h.do_channels:
+            if channel.status == Status.HIGH:
+                # Set the bit corresponding to this channel to high
+                data |= (1 << channel.index)
 
-            instantDoCtrl.writeAny(0, 2, port)
-            time.sleep(0.5)
-            return instantDoCtrl.readAny(0, 2)[1]
-        finally:
-            if instantDoCtrl:
-                instantDoCtrl.dispose()
+        logger.info(f"Writing data {data} to digital output channels")
 
-    def get_di(self, pcie_1762h: Pcie1762h):
-        from Automation.BDaq.InstantDiCtrl import InstantDiCtrl
-        instantDiCtrl = None
-        try:
-            instantDiCtrl = InstantDiCtrl(deviceDescription)
-            instantDiCtrl.loadProfile = profilePath
+        # Write the data to the digital output channels
+        instant_do.writeAny(self.start_channel, self.channel_count, [data])
 
-            return instantDiCtrl.readAny(0, 2)[1]
-        finally:
-            if instantDiCtrl:
-                instantDiCtrl.dispose()
+        # Clean up
+        instant_do.dispose()
 
-    def set_do_channel_name(self, pcie_1762h: Pcie1762h, index: int, name: str):
-        channel = next((ch for ch in pcie_1762h.do_channels if ch.index == index), None)
-        if channel:
-            channel.name = name
+    def get_di(self, pcie_1762h: Pcie1762h) -> int:
+        '''Get digital input values from the PCIE-1762H device'''
+        # Create an instance of the instant digital input
+        instant_di = InstantDiCtrl()
 
-    def set_do_channel_status(self, pcie_1762h: Pcie1762h, index: int, status: Status):
-        channel = next((ch for ch in pcie_1762h.do_channels if ch.index == index), None)
-        if channel:
-            channel.status = status
+        # Set the device description
+        instant_di.selectedDevice = DeviceInformation(self.device_description)
+
+        # Read data from digital input channels
+        data = instant_di.readAny(self.start_channel, self.channel_count)
+
+        # Clean up
+        instant_di.dispose()
+
+        logger.info(f"Read data {data} from digital input channels")
+
+        return data
