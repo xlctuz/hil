@@ -131,7 +131,7 @@ ColumnLayout {
                             Layout.preferredWidth: 200
                             placeholderText: qsTr("项目名称")
                             text: configViewModel?.currentProject.name || ""
-                            readOnly: true
+                            /* readOnly: true */
                         }
 
                         Item {
@@ -140,6 +140,16 @@ ColumnLayout {
                             Layout.fillHeight: true
                             Layout.fillWidth: true
                         }
+
+                        Connections {
+                            target: textFieldProjectName
+                            function onEditingFinished() {
+                                if (configViewModel && configViewModel.currentProject) {
+                                    configViewModel.currentProject.name = textFieldProjectName.text
+                                }
+                            }
+                        }
+
 
                         Connections {
                             target: btnDeleteProject

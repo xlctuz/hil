@@ -53,3 +53,9 @@ class ProjectListViewModel(QAbstractListModel):
             project = self._projects[row]
             project.checked = checked
             self.dataChanged.emit(self.index(row, 0), self.index(row, 0), [self.CheckedRole])
+
+    def get_checked_index(self):
+        for i, p in enumerate(self._projects):
+            if getattr(p, 'checked', False):
+                return i
+        return -1 # Return -1 if no item is checked

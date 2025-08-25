@@ -206,13 +206,32 @@ class ConfigViewModel(QObject):
         # Refresh the project list for the current channel
         self.selectChannel(self._current_channel_index)
 
+    def _on_project_saved(self):
+        """Slot to refresh the project list when a project is saved."""
+        logger.info("Project saved, refreshing project list.")
+        current_index = self._project_model.get_checked_index()
+        self.selectChannel(self._current_channel_index)
+        # re-select the same project index if it's still valid
+        if current_index < self._project_model.rowCount():
+            self.selectProject(current_index)
+
     @Slot(int)
     def selectProject(self, index):
         project = self._project_model.get_project(index)
         if project:
+            # Disconnect from the previous proxy's signal if it exists
+            if self._current_project_proxy and self._current_project_proxy._project_data:
+                try:
+                    self._current_project_proxy.projectSaved.disconnect(self._on_project_saved)
+                except RuntimeError:
+                    pass  # This happens if the signal was not connected, which is fine
+
             logger.info(f"Project {project.id} selected")
             self._current_project = project
             self._current_project_proxy = ProjectConfigViewModel(self.usecases, project)
+
+            # Connect the new proxy's signal
+            self._current_project_proxy.projectSaved.connect(self._on_project_saved)
+
             self._project_model.set_checked(index)
             self.currentProjectChanged.emit()
-

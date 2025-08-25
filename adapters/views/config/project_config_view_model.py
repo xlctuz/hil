@@ -17,6 +17,8 @@ class ProjectConfigViewModel(QObject):
     errorOccurred = Signal(str)
     started = Signal()
     stopped = Signal()
+    nameChanged = Signal()
+    projectSaved = Signal()
 
     def __init__(self, usecases: UseCases, project_data, parent=None):
         super().__init__(parent)
@@ -27,9 +29,17 @@ class ProjectConfigViewModel(QObject):
         self._pci1720u = Pci1720uConfigViewModel(usecases, project_data.pci1720u if project_data else None, self)
         self._is_started = False
 
-    @Property('QVariant', constant=True)
+    @Property('QVariant', notify=nameChanged)
     def name(self):
         return self._project_data.name if self._project_data else None
+
+    @name.setter
+    def name(self, value):
+        if self._project_data and self._project_data.name != value:
+            self._project_data.name = value
+            self.usecases.save_project(self._project_data)
+            self.nameChanged.emit()
+            self.projectSaved.emit()
 
     @Property(QObject, constant=True)
     def powerSupply(self):
@@ -47,3 +57,4 @@ class ProjectConfigViewModel(QObject):
     def is_started(self):
         return self._is_started
 
+    
