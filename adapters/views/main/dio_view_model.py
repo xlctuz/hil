@@ -52,6 +52,15 @@ class DioViewModel(QObject):
     def diEchos(self):
         return self._di_echos
 
+    @Property('QVariant', constant=True)
+    def configuredDoChannels(self):
+        return [ch for ch in self._do_channels if ch.name]
+
+    @Property('QVariant', constant=True)
+    def configuredDiEchos(self):
+        # The echos correspond to DI channels, so we filter based on the original DI channel name
+        return [echo for i, echo in enumerate(self._di_echos) if self._di_channels[i].name]
+
     def update_di_status(self, di_data):
         """Updates the status of the DI echo channels based on the integer data."""
         for i in range(16):

@@ -7,19 +7,16 @@ Pane {
     width: 1500
     height: 1000
 
+    property var dioModel: null
+
     ColumnLayout {
         id: columnLayout2
-        width: 100
-        height: 100
         anchors.fill: parent
 
         GroupBox {
             id: doChannels
-            width: 200
-            height: 200
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
             Layout.fillWidth: true
-            title: qsTr("DO回显")
+            title: qsTr("DO 状态")
 
             Flow {
                 id: flow1
@@ -27,29 +24,23 @@ Pane {
 
                 Repeater {
                     id: repeater
-                    model: 5
+                    model: dioModel ? dioModel.configuredDoChannels : []
 
                     Pane {
-                        id: pane
                         width: 200
-                        height: 200
+                        height: 50
 
                         GridLayout {
-                            id: gridLayout
-                            width: 100
-                            height: 100
-                            uniformCellWidths: true
-                            uniformCellHeights: true
+                            anchors.fill: parent
                             rows: 1
                             columns: 2
 
                             Label {
-                                id: label
-                                text: qsTr("Label")
+                                text: modelData.name
                             }
 
                             MyDIOIndicator {
-                                id: myDIOIndicator
+                                state: modelData.status
                             }
                         }
                     }
@@ -59,11 +50,8 @@ Pane {
 
         GroupBox {
             id: diChannels
-            width: 200
-            height: 200
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
             Layout.fillWidth: true
-            title: qsTr("DI")
+            title: qsTr("DI 状态")
 
             Flow {
                 id: flow2
@@ -71,28 +59,22 @@ Pane {
 
                 Repeater {
                     id: repeater1
-                    model: 3
-                }
+                    model: dioModel ? dioModel.configuredDiEchos : []
 
-                Pane {
-                    id: pane1
-                    width: 200
-                    height: 200
-                    GridLayout {
-                        id: gridLayout2
-                        width: 100
-                        height: 100
-                        uniformCellWidths: true
-                        uniformCellHeights: true
-                        rows: 1
-                        columns: 2
-                        Label {
-                            id: label1
-                            text: qsTr("Label")
-                        }
+                    Pane {
+                        width: 200
+                        height: 50
+                        GridLayout {
+                            anchors.fill: parent
+                            rows: 1
+                            columns: 2
+                            Label {
+                                text: modelData.name
+                            }
 
-                        MyDIOIndicator {
-                            id: myDIOIndicator1
+                            MyDIOIndicator {
+                                state: modelData.status
+                            }
                         }
                     }
                 }
@@ -101,8 +83,6 @@ Pane {
 
         Item {
             id: item2
-            width: 200
-            height: 200
             Layout.fillHeight: true
             Layout.fillWidth: true
         }

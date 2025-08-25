@@ -88,6 +88,7 @@ Pane {
             }
             MyMainDIO {
                 id: dio
+                dioModel: backend.mainViewModel.currentProject ? backend.mainViewModel.currentProject.pcie1762h : null
             }
         }
     }

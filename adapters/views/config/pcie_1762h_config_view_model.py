@@ -67,7 +67,7 @@ class DioEchoViewModel(QObject):
             self.statusNotify.emit(value)
 
 
-class Pcie1762hViewModel(QObject):
+class Pcie1762hConfigViewModel(QObject):
     def __init__(self, usecases: UseCases, pcie_data, parent=None):
         super().__init__(parent)
         self.usecases = usecases
@@ -85,16 +85,16 @@ class Pcie1762hViewModel(QObject):
 
             for ch_data in sorted_do:
                 self._do_channels.append(DioChannelViewModel(ch_data, DioChannelType.DO, self))
-            # for ch_data in sorted_di:
-            #     self._di_channels.append(DioChannelViewModel(ch_data, DioChannelType.DI, self))
+            for ch_data in sorted_di:
+                self._di_channels.append(DioChannelViewModel(ch_data, DioChannelType.DI, self))
 
     @Property('QVariant', constant=True)
     def doChannels(self):
         return self._do_channels
 
-    # @Property('QVariant', constant=True)
-    # def diChannels(self):
-    #     return self._di_channels
+    @Property('QVariant', constant=True)
+    def diChannels(self):
+        return self._di_channels
 
     @Property('QVariant', constant=True)
     def doEchos(self):
@@ -108,6 +108,14 @@ class Pcie1762hViewModel(QObject):
     def setDoChannelName(self, index, name):
         if self._pcie_data:
             channel = next((ch for ch in self._pcie_data.do_channels if ch.index == index), None)
+            if channel:
+                channel.name = name
+                self.usecases.save_pcie1762h_config(self._pcie_data)
+
+    @Slot(int, str)
+    def setDiChannelName(self, index, name):
+        if self._pcie_data:
+            channel = next((ch for ch in self._pcie_data.di_channels if ch.index == index), None)
             if channel:
                 channel.name = name
                 self.usecases.save_pcie1762h_config(self._pcie_data)

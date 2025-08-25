@@ -114,6 +114,11 @@ Pane {
                                             Layout.fillWidth: true
                                             placeholderText: qsTr("通道名称")
                                             text: pcie1762h?.doChannels[15 - index]?.name || ""
+                                            onEditingFinished: {
+                                                if (pcie1762h) {
+                                                    pcie1762h.setDoChannelName(15 - index, text)
+                                                }
+                                            }
                                         }
 
                                         RadioButton {
@@ -121,6 +126,11 @@ Pane {
                                             text: qsTr("高")
                                             display: AbstractButton.IconOnly
                                             checked: pcie1762h?.doChannels[15 - index]?.status === "HIGH"
+                                            onCheckedChanged: {
+                                                if (checked && pcie1762h) {
+                                                    pcie1762h.setDoChannelStatus(15 - index, "HIGH")
+                                                }
+                                            }
                                         }
 
                                         RadioButton {
@@ -128,6 +138,11 @@ Pane {
                                             text: qsTr("低")
                                             display: AbstractButton.TextBesideIcon
                                             checked: pcie1762h?.doChannels[15 - index]?.status === "LOW"
+                                            onCheckedChanged: {
+                                                if (checked && pcie1762h) {
+                                                    pcie1762h.setDoChannelStatus(15 - index, "LOW")
+                                                }
+                                            }
                                         }
 
                                         RadioButton {
@@ -135,52 +150,50 @@ Pane {
                                             text: qsTr("X")
                                             display: AbstractButton.TextBesideIcon
                                             checked: pcie1762h?.doChannels[15 - index]?.status === "NA"
-                                        }
-
-                                        Connections {
-                                            target: textField
-                                            function onEditingFinished() {
-                                                if (pcie1762h) {
-                                                    pcie1762h.setDoChannelName(15 - index, textField.text)
+                                            onCheckedChanged: {
+                                                if (checked && pcie1762h) {
+                                                    pcie1762h.setDoChannelStatus(15 - index, "NA")
                                                 }
                                             }
                                         }
                                     }
-                                    RowLayout {
-                                        id: rowLayout
-                                        width: 80
-                                        spacing: 5
-                                        layoutDirection: Qt.LeftToRight
-                                        uniformCellSizes: false
+                                }
+                            }
+                        }
+                    }
+                }
 
-                                        Connections {
-                                            target: radioButton
-                                            function onCheckedChanged() {
-                                                if (radioButton.checked) {
-                                                    if (pcie1762h) {
-                                                        console.log(pcie1762h)
-                                                        pcie1762h.setDoChannelStatus(15 - index, "HIGH")
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        Connections {
-                                            target: radioButton1
-                                            function onCheckedChanged() {
-                                                if (radioButton1.checked) {
-                                                    if (pcie1762h) {
-                                                        pcie1762h.setDoChannelStatus(15 - index, "LOW")
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        Connections {
-                                            target: radioButton2
-                                            function onCheckedChanged() {
-                                                if (radioButton2.checked) {
-                                                    if (pcie1762h) {
-                                                        pcie1762h.setDoChannelStatus(15 - index, "NA")
-                                                    }
+                GroupBox {
+                    id: diConfig
+                    height: 400
+                    Layout.fillWidth: true
+                    title: qsTr("DI配置")
+
+                    Flow {
+                        anchors.fill: parent
+                        spacing: 5
+
+                        Repeater {
+                            model: 16
+
+                            GroupBox {
+                                spacing: 2
+                                title: qsTr(`${15 - index}`)
+
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    spacing: 0
+
+                                    RowLayout {
+                                        width: 80
+
+                                        TextField {
+                                            Layout.fillWidth: true
+                                            placeholderText: qsTr("通道名称")
+                                            text: pcie1762h?.diChannels[15 - index]?.name || ""
+                                            onEditingFinished: {
+                                                if (pcie1762h) {
+                                                    pcie1762h.setDiChannelName(15 - index, text)
                                                 }
                                             }
                                         }
