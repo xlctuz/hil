@@ -238,6 +238,7 @@ ColumnLayout {
                                 id: pci1720uConfig
                                 height: swipeView.height
                                 width: swipeView.width
+                                pci1720u: configViewModel?.currentProject?.pci1720u
                             }
                         }
                     }

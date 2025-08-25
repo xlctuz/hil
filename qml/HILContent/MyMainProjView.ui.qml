@@ -90,6 +90,10 @@ Pane {
                 id: dio
                 dioModel: backend.mainViewModel.currentProject ? backend.mainViewModel.currentProject.pcie1762h : null
             }
+            MyMainAO {
+                id: ao
+                aoModel: backend.mainViewModel.currentProject ? backend.mainViewModel.currentProject.pci1720u : null
+            }
         }
     }
 }

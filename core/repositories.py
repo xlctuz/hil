@@ -4,6 +4,7 @@ from core.database import Session, engine
 from sqlalchemy import select
 from core.entities.power_supply import PowerSupply, PowerSupplyChannel
 from core.entities.pcie_1762h import Base as Pcie1762hBase, Pcie1762h, Pcie1762hDoChannel, Pcie1762hDiChannel, Status
+from core.entities.pci1720u import Pci1720u
 from core.logger import logger
 from sqlalchemy.orm import joinedload
 from typing import List
@@ -17,7 +18,8 @@ class ProjectRepository:
                 .where(Channel.index == channel_index)\
                 .options(joinedload(Project.power_supply).joinedload(PowerSupply.channels),
                          joinedload(Project.pcie_1762h).options(joinedload(Pcie1762h.do_channels),
-                                                                joinedload(Pcie1762h.di_channels)))
+                                                                joinedload(Pcie1762h.di_channels)),
+                         joinedload(Project.pci1720u).joinedload(Pci1720u.channels))
 
             projects = session.scalars(stmt).unique().all()
 
@@ -104,3 +106,17 @@ class Repository:
         self.pcie_1762h = Pcie1762hRepository()
         self.channel = ChannelRepository()
 
+    def save(self, data):
+        session = Session()
+        try:
+            if not hasattr(data, 'id') or not data.id:
+                logger.error("has no id in data")
+                return
+
+            session.merge(data)
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()

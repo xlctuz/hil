@@ -1,6 +1,7 @@
 from PySide6.QtCore import QObject, Property, Slot, Signal, QThread, QTimer
 from adapters.views.main.power_supply_view_model import PowerSupplyViewModel
 from adapters.views.main.dio_view_model import DioViewModel
+from adapters.views.main.ao_view_model import AoViewModel
 from core.entities.power_supply import IO
 from core.entities.pcie_1762h import Status
 from core.logger import logger
@@ -24,13 +25,12 @@ class ProjectViewModel(QObject):
         self._project_data = project_data
         self._power_supply = PowerSupplyViewModel(project_data.power_supply if project_data else None, self)
         self._pcie_1762h = DioViewModel(project_data.pcie_1762h if project_data else None, self)
+        self._pci1720u = AoViewModel(project_data.pci1720u if project_data else None, self)
         self._is_started = False
 
-        # Poller for power supply data
-        self._scheduler_port = None
-
-        # Timer for DIO monitoring
-        self._dio_timer = None
+        # Schedulers for monitoring
+        self._power_supply_scheduler = None
+        self._dio_scheduler = None
 
     @Property('QVariant', constant=True)
     def name(self):
@@ -43,6 +43,10 @@ class ProjectViewModel(QObject):
     @Property(QObject, constant=True)
     def pcie1762h(self):
         return self._pcie_1762h
+
+    @Property(QObject, constant=True)
+    def pci1720u(self):
+        return self._pci1720u
 
     @Property(bool, constant=True)
     def is_started(self):

@@ -2,6 +2,7 @@ from core.repositories import Repository
 from core.interfaces.power_supply_port import PowerSupplyPort
 from core.interfaces.scheduler_port import SchedulerPort
 from core.interfaces.pcie_1762h_port import Pcie1762hPort
+from core.interfaces.pci1720u_port import Pci1720uPort
 from .select_project import SelectProject
 from .init_channels import Init_channels
 from .add_project import Add_project
@@ -22,18 +23,22 @@ from .stop_project import StopProject
 from .read_pcie_1762h_data import ReadPcie1762hData
 from .start_pcie_1762h_monitoring import StartPcie1762hMonitoring
 from .stop_pcie_1762h_monitoring import StopPcie1762hMonitoring
+from .save_pci1720u_config import SavePci1720uConfig
+from .set_pci1720u_voltage import SetPci1720uVoltage
 
 
 from typing import Callable
 
 
 class UseCases:
-    def __init__(self, repository: Repository, power_supply_port: PowerSupplyPort, 
-                 scheduler_factory: Callable[[], SchedulerPort], pcie_1762h_port: Pcie1762hPort):
+    def __init__(self, repository: Repository, power_supply_port: PowerSupplyPort,
+                 scheduler_factory: Callable[[], SchedulerPort], pcie_1762h_port: Pcie1762hPort,
+                 pci1720u_port: Pci1720uPort):
         # Store the ports
         self.power_supply_port = power_supply_port
         self.pcie_1762h_port = pcie_1762h_port
-        
+        self.pci1720u_port = pci1720u_port
+
         # Project management
         self.select_project_from_channel = SelectProject(repository.project)
         self.add_project = Add_project(repository.project, repository.channel)
@@ -41,25 +46,25 @@ class UseCases:
         self.save_project = SaveProject(repository.project)
         self.start_project = StartProject(power_supply_port, pcie_1762h_port)
         self.stop_project = StopProject(power_supply_port)
-        
+
         # Channel initialization
         self.init_channels = Init_channels(repository.channel)
-        
+
         # PCIE-1762H configuration
         self.save_pcie1762h_config = Save_pcie1762h_config(repository.pcie_1762h)
         self.test_pcie_1762h = TestPcie1762h(pcie_1762h_port)
-        
+
         # Power supply configuration
         self.configure_power_supply = ConfigurePowerSupply()
         self.set_power_supply_voltage = SetPowerSupplyVoltage()
         self.set_power_supply_current = SetPowerSupplyCurrent()
         self.reset_power_supply_settings = ResetPowerSupplySettings()
         self.toggle_power_supply_test = TogglePowerSupplyTest()
-        
+
         # Power supply monitoring
         self.read_power_supply_data = ReadPowerSupplyData(power_supply_port)
         self.start_power_supply_monitoring = StartPowerSupplyMonitoring(
-            power_supply_port, 
+            power_supply_port,
             scheduler_factory,
             self.read_power_supply_data
         )
@@ -72,3 +77,7 @@ class UseCases:
             self.read_pcie_1762h_data
         )
         self.stop_pcie_1762h_monitoring = StopPcie1762hMonitoring()
+
+        # PCI-1720U configuration
+        self.save_pci1720u_config = SavePci1720uConfig(repository)
+        self.set_pci1720u_voltage = SetPci1720uVoltage(pci1720u_port)
