@@ -1,11 +1,11 @@
 from PySide6.QtCore import QObject, Property, Slot, Signal, QThread, QTimer
 from adapters.views.main.power_supply_view_model import PowerSupplyViewModel
 from adapters.views.main.dio_view_model import DioViewModel
-from adapters.devices.pcie_1762h_adapter import Pcie1762hAdapter
 from core.entities.power_supply import IO
 from core.entities.pcie_1762h import Status
 from core.logger import logger
 from core.usecases import UseCases
+import traceback
 
 
 class ProjectViewModel(QObject):
@@ -18,19 +18,16 @@ class ProjectViewModel(QObject):
     started = Signal()
     stopped = Signal()
 
-    def __init__(self, project_data, parent=None):
+    def __init__(self, usecases: UseCases, project_data, parent=None):
         super().__init__(parent)
+        self.usecases = usecases
         self._project_data = project_data
         self._power_supply = PowerSupplyViewModel(project_data.power_supply if project_data else None, self)
         self._pcie_1762h = DioViewModel(project_data.pcie_1762h if project_data else None, self)
         self._is_started = False
 
-        # Hardware adapters
-        self._pcie_1762h_adapter = Pcie1762hAdapter()
-
         # Poller for power supply data
-        self._power_supply_poller = None
-        self._poller_thread = None
+        self._scheduler_port = None
 
         # Timer for DIO monitoring
         self._dio_timer = None
@@ -59,11 +56,8 @@ class ProjectViewModel(QObject):
             return False
 
         try:
-            # Configure power supply
-            self._configure_power_supply()
-
-            # Configure DIO
-            self._configure_dio()
+            # Configure hardware using the use case
+            self.usecases.start_project(self._project_data)
 
             # Start monitoring
             self._start_monitoring()
@@ -72,6 +66,7 @@ class ProjectViewModel(QObject):
             self.started.emit()
             return True
         except Exception as e:
+            traceback.print_exc()
             logger.error(f"Error starting project: {str(e)}")
             self.errorOccurred.emit(f"启动项目失败: {str(e)}")
             self.stop()  # Clean up any partially started components
@@ -87,8 +82,8 @@ class ProjectViewModel(QObject):
             # Stop monitoring
             self._stop_monitoring()
 
-            # Turn off power supply
-            self._turn_off_power_supply()
+            # Turn off power supply using the use case
+            self.usecases.stop_project(self._project_data)
 
             self._is_started = False
             self.stopped.emit()
@@ -99,125 +94,39 @@ class ProjectViewModel(QObject):
             # Ensure started state is False even if there was an error
             self._is_started = False
 
-    def _configure_power_supply(self):
-        """Configure the power supply with project settings"""
-        if not self._project_data.power_supply:
-            return
-
-        try:
-            power_supply = self._project_data.power_supply
-            # Create a temporary power supply object for configuration
-            from core.entities.power_supply import PowerSupply, Channel
-            temp_power_supply = PowerSupply(power_supply.resource_name, power_supply.baud_rate)
-
-            # Open connection
-            self.usecases.power_supply_port.open(temp_power_supply)
-
-            try:
-                # Map channel indices to Channel enum values
-                channel_map = {0: Channel.CH1, 1: Channel.CH2, 2: Channel.CH3}
-                
-                # Configure each channel
-                for channel in power_supply.channels:
-                    if channel.voltage is not None and channel.current is not None:
-                        # Get the corresponding Channel enum value
-                        channel_enum = channel_map.get(channel.index, Channel.CH1)
-                        
-                        # Apply voltage and current settings
-                        self.usecases.power_supply_port.set_voltage_current(
-                            temp_power_supply,
-                            channel_enum,
-                            channel.voltage,
-                            channel.current
-                        )
-
-                # Turn on power supply
-                self.usecases.power_supply_port.set_on_off(temp_power_supply, IO.ON)
-            finally:
-                # Close connection
-                self.usecases.power_supply_port.close(temp_power_supply)
-        except Exception as e:
-            raise Exception(f"配置电源失败: {str(e)}")
-
-    def _configure_dio(self):
-        """Configure the DIO with project settings"""
-        if not self._project_data.pcie_1762h:
-            return
-
-        try:
-            # Set DO channels according to project configuration
-            self._pcie_1762h_adapter.run_test(self._project_data.pcie_1762h)
-        except Exception as e:
-            raise Exception(f"配置DIO失败: {str(e)}")
-
-    def _turn_off_power_supply(self):
-        """Turn off the power supply"""
-        if not self._project_data.power_supply:
-            return
-
-        try:
-            power_supply = self._project_data.power_supply
-            # Create a temporary power supply object for configuration
-            from core.entities.power_supply import PowerSupply, Channel
-            temp_power_supply = PowerSupply(power_supply.resource_name, power_supply.baud_rate)
-
-            # Open connection
-            self.usecases.power_supply_port.open(temp_power_supply)
-
-            try:
-                # Turn off power supply
-                self.usecases.power_supply_port.set_on_off(temp_power_supply, IO.OFF)
-            finally:
-                # Close connection
-                self.usecases.power_supply_port.close(temp_power_supply)
-        except Exception as e:
-            logger.error(f"Error turning off power supply: {str(e)}")
+    
 
     def _start_monitoring(self):
         """Start monitoring power supply and DIO status"""
-        if not self._project_data.power_supply:
-            return
-
         try:
-            # Use the use case to start power supply monitoring
-            self._power_supply_poller, self._poller_thread = self.usecases.start_power_supply_monitoring(
-                self._project_data,
-                self._on_power_data_polled,
-                self._on_polling_error
-            )
+            # Start power supply monitoring
+            if self._project_data.power_supply:
+                self._power_supply_scheduler = self.usecases.start_power_supply_monitoring(
+                    self._project_data,
+                    self._on_power_data_polled,
+                    self._on_polling_error
+                )
 
-            # Start DIO monitoring with a timer
-            self._start_dio_monitoring()
+            # Start DIO monitoring
+            if self._project_data.pcie_1762h:
+                self._dio_scheduler = self.usecases.start_pcie_1762h_monitoring(
+                    self._project_data,
+                    self._on_dio_data_polled,
+                    self._on_polling_error
+                )
         except Exception as e:
             raise Exception(f"启动监控失败: {str(e)}")
-
-    def _start_dio_monitoring(self):
-        """Start monitoring DIO status with a timer"""
-        if not self._project_data.pcie_1762h:
-            return
-
-        try:
-            self._dio_timer = QTimer()
-            self._dio_timer.timeout.connect(self._read_dio_status)
-            self._dio_timer.start(500)  # Read DIO status every 500ms
-        except Exception as e:
-            raise Exception(f"启动DIO监控失败: {str(e)}")
-
-    def _stop_dio_monitoring(self):
-        """Stop monitoring DIO status"""
-        if self._dio_timer:
-            self._dio_timer.stop()
-            self._dio_timer.deleteLater()
-            self._dio_timer = None
 
     def _stop_monitoring(self):
         """Stop monitoring power supply and DIO status"""
         try:
-            # Use the use case to stop power supply monitoring
-            self.usecases.stop_power_supply_monitoring(self._power_supply_poller, self._poller_thread)
+            # Stop power supply monitoring
+            self.usecases.stop_power_supply_monitoring(self._power_supply_scheduler)
+            self._power_supply_scheduler = None
 
             # Stop DIO monitoring
-            self._stop_dio_monitoring()
+            self.usecases.stop_pcie_1762h_monitoring(self._dio_scheduler)
+            self._dio_scheduler = None
         except Exception as e:
             logger.error(f"Error stopping monitoring: {str(e)}")
 
@@ -244,30 +153,17 @@ class ProjectViewModel(QObject):
         except Exception as e:
             logger.error(f"Error handling power data: {str(e)}")
 
-    def _read_dio_status(self):
-        """Read DIO status and update UI"""
-        if not self._project_data.pcie_1762h:
-            return
-
+    def _on_dio_data_polled(self, di_data):
+        """Handle polled DIO data"""
         try:
-            # Read DI status
-            di_data = self._pcie_1762h_adapter.get_di(self._project_data.pcie_1762h)
+            # Update the view model
+            self._pcie_1762h.update_di_status(di_data)
 
-            # Update DI echo channels
-            for i in range(16):
-                # Extract bit i from di_data
-                bit_value = (di_data >> i) & 1
-                status = Status.HIGH if bit_value else Status.LOW
-
-                # Update the echo channel
-                if i < len(self._pcie_1762h._di_echos):
-                    self._pcie_1762h._di_echos[i].status = status.value
-
-            # Emit signal with DI data
+            # Emit signal with DI data for other UI components if needed
             self.dioDataChanged.emit(di_data)
         except Exception as e:
-            logger.error(f"Error reading DIO status: {str(e)}")
-            self.errorOccurred.emit(f"读取DIO状态失败: {str(e)}")
+            logger.error(f"Error handling DIO data: {str(e)}")
+            self.errorOccurred.emit(f"处理DIO数据失败: {str(e)}")
 
     def _on_polling_error(self, error_message):
         """Handle polling error"""

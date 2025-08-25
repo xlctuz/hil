@@ -8,6 +8,15 @@ ChartView {
 
     property alias series : series
     property color lineColor : "blue"
+    property var chartData: []
+
+    onChartDataChanged: {
+        series.clear();
+        axisY.max = 0; // Reset max for auto-scaling
+        for (var i = 0; i < chartData.length; ++i) {
+            series.append(i, chartData[i]);
+        }
+    }
 
     width: 300
     height: 200
@@ -24,13 +33,13 @@ ChartView {
     ValueAxis {
         id: axisX
         min: 0
-        max: 0
+        max: 60 // Fixed max for the number of data points
     }
 
     ValueAxis {
         id: axisY
         min: 0
-        max: 0
+        max: 1 // Initial max, will be auto-scaled
     }
     LineSeries {
         id: series
@@ -38,22 +47,16 @@ ChartView {
         axisX: axisX
         axisY: axisY
         color: lineColor
-
     }
 
     Connections {
         target: series
         function onPointAdded(index) {
             var point = series.at(index)
+            // A simple auto-scaling for the Y-axis
             if (axisY.max < point.y) {
-                axisY.max = point.y << 2
+                axisY.max = point.y * 1.2 // Add a little buffer
             }
-
-            if (series.count > 50) {
-                series.removePoints(0, series.count - 50)
-                series.axisX.min = series.at(0).x
-            }
-            series.axisX.max = series.at(series.count-1).x
         }
     }
 }

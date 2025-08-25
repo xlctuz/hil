@@ -21,12 +21,11 @@ class ConfigViewModel(QObject):
     powerSupplyTestFailed = Signal(str)
     powerSupplyDataUpdated = Signal(list, list, list) # voltage, current, power
 
-    def __init__(self, usecases: UseCases, power_supply_adapter, scheduler_port: SchedulerPort,
-                 parent=None):
+    def __init__(self, usecases: UseCases, power_supply_adapter, parent=None):
         super().__init__(parent)
         self.usecases = usecases
         self.power_supply_adapter = power_supply_adapter
-        self.scheduler_port = scheduler_port
+        self._test_scheduler = None
 
         self._project_model = ProjectListViewModel()
         self._current_project = None
@@ -151,7 +150,7 @@ class ConfigViewModel(QObject):
         if testing:
             # Start monitoring using the use case
             try:
-                self.usecases.start_power_supply_monitoring(
+                self._test_scheduler = self.usecases.start_power_supply_monitoring(
                     self._current_project,
                     self._on_power_supply_data_updated,
                     self.powerSupplyTestFailed.emit
@@ -164,7 +163,8 @@ class ConfigViewModel(QObject):
         else:
             # Stop monitoring using the use case
             try:
-                self.usecases.stop_power_supply_monitoring(self.scheduler_port)
+                self.usecases.stop_power_supply_monitoring(self._test_scheduler)
+                self._test_scheduler = None
             except Exception as e:
                 msg = f"停止电源监控失败: {str(e)}"
                 logger.info(msg)

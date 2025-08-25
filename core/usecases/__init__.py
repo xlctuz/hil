@@ -17,14 +17,21 @@ from .start_power_supply_monitoring import StartPowerSupplyMonitoring
 from .stop_power_supply_monitoring import StopPowerSupplyMonitoring
 from .read_power_supply_data import ReadPowerSupplyData
 from .test_pcie_1762h import TestPcie1762h
+from .start_project import StartProject
+from .stop_project import StopProject
+from .read_pcie_1762h_data import ReadPcie1762hData
+from .start_pcie_1762h_monitoring import StartPcie1762hMonitoring
+from .stop_pcie_1762h_monitoring import StopPcie1762hMonitoring
+
+
+from typing import Callable
 
 
 class UseCases:
     def __init__(self, repository: Repository, power_supply_port: PowerSupplyPort, 
-                 scheduler_port: SchedulerPort, pcie_1762h_port: Pcie1762hPort):
+                 scheduler_factory: Callable[[], SchedulerPort], pcie_1762h_port: Pcie1762hPort):
         # Store the ports
         self.power_supply_port = power_supply_port
-        self.scheduler_port = scheduler_port
         self.pcie_1762h_port = pcie_1762h_port
         
         # Project management
@@ -32,6 +39,8 @@ class UseCases:
         self.add_project = Add_project(repository.project, repository.channel)
         self.delete_project = Delete_project(repository.project)
         self.save_project = SaveProject(repository.project)
+        self.start_project = StartProject(power_supply_port, pcie_1762h_port)
+        self.stop_project = StopProject(power_supply_port)
         
         # Channel initialization
         self.init_channels = Init_channels(repository.channel)
@@ -51,7 +60,15 @@ class UseCases:
         self.read_power_supply_data = ReadPowerSupplyData(power_supply_port)
         self.start_power_supply_monitoring = StartPowerSupplyMonitoring(
             power_supply_port, 
-            scheduler_port,
+            scheduler_factory,
             self.read_power_supply_data
         )
         self.stop_power_supply_monitoring = StopPowerSupplyMonitoring()
+
+        # PCIE-1762H monitoring
+        self.read_pcie_1762h_data = ReadPcie1762hData(pcie_1762h_port)
+        self.start_pcie_1762h_monitoring = StartPcie1762hMonitoring(
+            scheduler_factory,
+            self.read_pcie_1762h_data
+        )
+        self.stop_pcie_1762h_monitoring = StopPcie1762hMonitoring()

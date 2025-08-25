@@ -14,6 +14,8 @@ class Pcie1762hAdapter(Pcie1762hPort):
 
     def run_test(self, pcie_1762h: Pcie1762h):
         '''Run a test on the PCIE-1762H device'''
+
+        from Automation.BDaq.InstantDiCtrl import InstantDoCtrl
         # Create an instance of the instant digital output
         instant_do = InstantDoCtrl()
 
@@ -36,6 +38,8 @@ class Pcie1762hAdapter(Pcie1762hPort):
         instant_do.dispose()
 
     def get_di(self, pcie_1762h: Pcie1762h) -> int:
+        from Automation.BDaq.InstantDiCtrl import InstantDiCtrl
+
         '''Get digital input values from the PCIE-1762H device'''
         # Create an instance of the instant digital input
         instant_di = InstantDiCtrl()

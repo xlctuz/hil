@@ -29,15 +29,15 @@ if __name__ == "__main__":
     else:
         power_supply_adapter = MockPowerSupplyAdapter()
         pcie_1762h_adapter = MockPcie1762hAdapter()
-    scheduler_adapter = QtSchedulerAdapter()
-    use_cases = UseCases(repository, power_supply_adapter, scheduler_adapter, pcie_1762h_adapter)
+    scheduler_factory = lambda: QtSchedulerAdapter()
+    use_cases = UseCases(repository, power_supply_adapter, scheduler_factory, pcie_1762h_adapter)
 
     # Initialize channels if needed
     use_cases.init_channels()
 
     # Create view models
     main_view_model = MainViewModel(use_cases)
-    config_view_model = ConfigViewModel(use_cases, power_supply_adapter, scheduler_adapter)
+    config_view_model = ConfigViewModel(use_cases, power_supply_adapter)
 
     # Create backend adapter
     backend_adapter = BackendAdapter(main_view_model, config_view_model)
@@ -47,10 +47,6 @@ if __name__ == "__main__":
     engine.addImportPath(os.path.join(os.path.dirname(__file__), "qml/"))
     engine.rootContext().setContextProperty("backend", backend_adapter)
     engine.load(os.path.join(os.path.dirname(__file__), "qml/HILContent/App.qml"))
-
-    # Load the main QML file
-    qml_file = os.path.join(os.path.dirname(__file__), "qml", "main.qml")
-    engine.load(qml_file)
 
     # Check if the QML file was loaded successfully
     if not engine.rootObjects():

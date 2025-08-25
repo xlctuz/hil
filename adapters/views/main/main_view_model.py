@@ -14,7 +14,7 @@ class MainViewModel(QObject):
         self.usecases = usecases
         self._project_model = ProjectListViewModel()
         self._current_project = None
-        self._current_project_proxy = ProjectViewModel(None)
+        self._current_project_proxy = ProjectViewModel(usecases, None)
         self._current_channel_index = 0
 
     @Property(QObject, constant=True)
@@ -36,7 +36,7 @@ class MainViewModel(QObject):
         self._project_model.set_projects(projects)
 
         self._current_project = None
-        self._current_project_proxy = ProjectViewModel(None)
+        self._current_project_proxy = ProjectViewModel(self.usecases, None)
         self.currentProjectChanged.emit()
         if self._project_model.rowCount() > 0:
             self.selectProject(0)
@@ -47,6 +47,6 @@ class MainViewModel(QObject):
         if project:
             logger.info(f"Project {project.id} selected")
             self._current_project = project
-            self._current_project_proxy = ProjectViewModel(project)
+            self._current_project_proxy = ProjectViewModel(self.usecases, project)
             self._project_model.set_checked(index)
             self.currentProjectChanged.emit()
