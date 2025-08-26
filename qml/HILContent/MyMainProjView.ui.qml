@@ -36,6 +36,11 @@ Pane {
                     width: 180
                     text: qsTr("AO(PCI-1720U)")
                 }
+                TabButton {
+                    id: tabButton11
+                    width: 180
+                    text: qsTr("RM550")
+                }
                 Layout.preferredWidth: 900
                 Layout.fillWidth: true
             }
@@ -84,15 +89,19 @@ Pane {
 
             MyMainPowerSupply {
                 id: powerSupply
-                powerSupplyModel: backend.mainViewModel.currentProject ? backend.mainViewModel.currentProject.powerSupply : null
+                powerSupplyModel: currentProj ? currentProj.powerSupply : null
             }
             MyMainDIO {
                 id: dio
-                dioModel: backend.mainViewModel.currentProject ? backend.mainViewModel.currentProject.pcie1762h : null
+                dioModel: currentProj ? currentProj.pcie1762h : null
             }
             MyMainAO {
                 id: ao
-                aoModel: backend.mainViewModel.currentProject ? backend.mainViewModel.currentProject.pci1720u : null
+                aoModel: currentProj ? currentProj.pci1720u : null
+            }
+            MyMainRm550 {
+                id: rm550
+                rm550ViewModel: currentProj ? currentProj.rm550 : null
             }
         }
     }

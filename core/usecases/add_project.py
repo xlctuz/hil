@@ -7,6 +7,7 @@ from core.entities.channel import Channel
 from core.entities.pcie_1762h import Pcie1762h
 from core.entities.power_supply import PowerSupply
 from core.entities.pci1720u import Pci1720u
+from core.entities.rm550 import RM550
 from core.repositories import ProjectRepository, ChannelRepository
 
 
@@ -32,6 +33,9 @@ class Add_project:
         # Create default PCI-1720U config
         pci1720u = Pci1720u()
         project.pci1720u = pci1720u
+
+        rm550 = RM550()
+        project.rm550 = rm550
 
         # Set the channel for the project
         project.channel = channel

@@ -4,7 +4,7 @@ from core.logger import logger
 
 class MockPci1720uAdapter(Pci1720uPort):
     """Mock adapter for PCI-1720U testing"""
-    
+
     def __init__(self):
         self.voltages = {} # Store voltages per device_number and channel
         logger.info("Initialized MockPci1720uAdapter")
@@ -13,7 +13,7 @@ class MockPci1720uAdapter(Pci1720uPort):
         device_key = pci1720u.device_number
         if device_key not in self.voltages:
             self.voltages[device_key] = {}
-        
+
         self.voltages[device_key][channel_index] = voltage
         logger.info(f"[Mock] Set PCI-1720U Device#{device_key} Channel {channel_index} to {voltage}V")
 

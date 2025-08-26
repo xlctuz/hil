@@ -29,7 +29,8 @@ class ConfigViewModel(QObject):
 
         self._project_model = ProjectListViewModel()
         self._current_project = None
-        self._current_project_proxy = ProjectConfigViewModel(usecases, None)
+        # self._current_project_proxy = ProjectConfigViewModel(usecases, None)
+        self._current_project_proxy = None
         self._current_channel_index = 0
         self._is_testing = False
 
@@ -76,7 +77,8 @@ class ConfigViewModel(QObject):
         self._project_model.set_projects(projects)
 
         self._current_project = None
-        self._current_project_proxy = ProjectConfigViewModel(self.usecases, None)
+        # self._current_project_proxy = ProjectConfigViewModel(self.usecases, None)
+        self._current_project_proxy = None
         self.currentProjectChanged.emit()
         if self._project_model.rowCount() > 0:
             self.selectProject(0)

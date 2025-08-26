@@ -2,6 +2,7 @@ from PySide6.QtCore import QObject, Property, Slot, Signal, QThread, QTimer
 from adapters.views.config.power_supply_config_view_model import PowerSupplyConfigViewModel
 from adapters.views.config.pcie_1762h_config_view_model import Pcie1762hConfigViewModel
 from adapters.views.config.pci1720u_config_view_model import Pci1720uConfigViewModel
+from adapters.views.config.rm550_config_view_model import RM550ConfigViewModel
 from core.entities.power_supply import IO
 from core.entities.pcie_1762h import Status
 from core.logger import logger
@@ -27,6 +28,7 @@ class ProjectConfigViewModel(QObject):
         self._power_supply = PowerSupplyConfigViewModel(usecases, project_data.power_supply if project_data else None, self)
         self._pcie_1762h = Pcie1762hConfigViewModel(usecases, project_data.pcie_1762h if project_data else None, self)
         self._pci1720u = Pci1720uConfigViewModel(usecases, project_data.pci1720u if project_data else None, self)
+        self._rm550 = RM550ConfigViewModel(usecases, project_data.rm550 if project_data else None, self)
         self._is_started = False
 
     @Property('QVariant', notify=nameChanged)
@@ -53,8 +55,12 @@ class ProjectConfigViewModel(QObject):
     def pci1720u(self):
         return self._pci1720u
 
+    @Property(QObject, constant=True)
+    def rm550(self):
+        return self._rm550
+
     @Property(bool, constant=True)
     def is_started(self):
         return self._is_started
 
-    
+

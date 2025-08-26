@@ -3,6 +3,7 @@ from core.interfaces.power_supply_port import PowerSupplyPort
 from core.interfaces.scheduler_port import SchedulerPort
 from core.interfaces.pcie_1762h_port import Pcie1762hPort
 from core.interfaces.pci1720u_port import Pci1720uPort
+from core.interfaces.rm550_port import RM550Port
 from .select_project import SelectProject
 from .init_channels import Init_channels
 from .add_project import Add_project
@@ -25,6 +26,12 @@ from .start_pcie_1762h_monitoring import StartPcie1762hMonitoring
 from .stop_pcie_1762h_monitoring import StopPcie1762hMonitoring
 from .save_pci1720u_config import SavePci1720uConfig
 from .set_pci1720u_voltage import SetPci1720uVoltage
+from .get_rm550_config import GetRM550ConfigUseCase
+from .save_rm550_config import SaveRM550ConfigUseCase
+from .apply_rm550_resistance import ApplyRM550ResistanceUseCase
+from .toggle_rm550_output import ToggleRM550OutputUseCase
+from .start_rm550_monitoring import StartRM550MonitoringUseCase
+from .stop_rm550_monitoring import StopRM550MonitoringUseCase
 
 
 from typing import Callable
@@ -33,11 +40,12 @@ from typing import Callable
 class UseCases:
     def __init__(self, repository: Repository, power_supply_port: PowerSupplyPort,
                  scheduler_factory: Callable[[], SchedulerPort], pcie_1762h_port: Pcie1762hPort,
-                 pci1720u_port: Pci1720uPort):
+                 pci1720u_port: Pci1720uPort, rm550_port: RM550Port):
         # Store the ports
         self.power_supply_port = power_supply_port
         self.pcie_1762h_port = pcie_1762h_port
         self.pci1720u_port = pci1720u_port
+        self.rm550_port = rm550_port
 
         # Project management
         self.select_project_from_channel = SelectProject(repository.project)
@@ -81,3 +89,11 @@ class UseCases:
         # PCI-1720U configuration
         self.save_pci1720u_config = SavePci1720uConfig(repository)
         self.set_pci1720u_voltage = SetPci1720uVoltage(pci1720u_port)
+
+        # RM550 configuration and monitoring
+        self.get_rm550_config = GetRM550ConfigUseCase(repository)
+        self.save_rm550_config = SaveRM550ConfigUseCase(repository)
+        self.apply_rm550_resistance = ApplyRM550ResistanceUseCase(rm550_port)
+        self.toggle_rm550_output = ToggleRM550OutputUseCase(rm550_port)
+        self.start_rm550_monitoring = StartRM550MonitoringUseCase(rm550_port, scheduler_factory())
+        self.stop_rm550_monitoring = StopRM550MonitoringUseCase(self.start_rm550_monitoring)

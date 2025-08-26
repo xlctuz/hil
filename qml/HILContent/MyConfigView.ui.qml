@@ -102,7 +102,7 @@ ColumnLayout {
                         anchors.leftMargin: 0
                         anchors.topMargin: 0
                         model: configViewModel ? configViewModel.projectsModel : null
-                        projectModel : configViewModel
+                        projectModel: configViewModel
                     }
                 }
             }
@@ -130,7 +130,7 @@ ColumnLayout {
                             id: textFieldProjectName
                             Layout.preferredWidth: 200
                             placeholderText: qsTr("项目名称")
-                            text: configViewModel?.currentProject.name || ""
+                            text: configViewModel?.currentProject?.name || ""
                             /* readOnly: true */
                         }
 
@@ -144,12 +144,12 @@ ColumnLayout {
                         Connections {
                             target: textFieldProjectName
                             function onEditingFinished() {
-                                if (configViewModel && configViewModel.currentProject) {
+                                if (configViewModel
+                                        && configViewModel.currentProject) {
                                     configViewModel.currentProject.name = textFieldProjectName.text
                                 }
                             }
                         }
-
 
                         Connections {
                             target: btnDeleteProject
@@ -241,7 +241,8 @@ ColumnLayout {
                                 id: pcie1762hConfig
                                 height: swipeView.height
                                 width: swipeView.width
-                                pcie1762h: configViewModel && configViewModel.currentProject ? configViewModel.currentProject.pcie1762h : null
+                                pcie1762h: configViewModel
+                                           && configViewModel.currentProject ? configViewModel.currentProject.pcie1762h : null
                             }
 
                             MyPci1720uConfig {
@@ -249,6 +250,13 @@ ColumnLayout {
                                 height: swipeView.height
                                 width: swipeView.width
                                 pci1720u: configViewModel?.currentProject?.pci1720u
+                            }
+
+                            MyRm550Config {
+                                id: rm550Config
+                                height: swipeView.height
+                                width: swipeView.width
+                                rm550ConfigViewModel: configViewModel?.currentProject?.rm550
                             }
                         }
                     }
@@ -259,11 +267,10 @@ ColumnLayout {
 
     Connections {
         target: configView
-        Component.onCompleted: function() { 
+        Component.onCompleted: function () {
             if (configViewModel) {
-                configViewModel.selectChannel(0) 
+                configViewModel.selectChannel(0)
             }
         }
     }
-
 }

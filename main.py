@@ -18,6 +18,7 @@ import core.entities.channel
 import core.entities.power_supply
 import core.entities.pcie_1762h
 import core.entities.pci1720u
+import core.entities.rm550
 
 if __name__ == "__main__":
     # Create all tables
@@ -28,27 +29,36 @@ if __name__ == "__main__":
 
     # Create core components
     repository = Repository()
-    use_mock = True
+    use_mock = True 
     if use_mock:
         from core.usecases.mocks.mock_power_supply_adapter import MockPowerSupplyAdapter
         from core.usecases.mocks.mock_pcie_1762h_adapter import MockPcie1762hAdapter
         from adapters.devices.mock_pci1720u_adapter import MockPci1720uAdapter
+        from core.usecases.mocks.mock_rm550_adapter import MockRM550Adapter
         power_supply_adapter = MockPowerSupplyAdapter()
         pcie_1762h_adapter = MockPcie1762hAdapter()
         pci1720u_adapter = MockPci1720uAdapter()
+        rm550_adapter = MockRM550Adapter()
     else:
         from adapters.devices.power_supply_adapter import PowerSupplyAdapter
         from adapters.devices.pcie_1762h_adapter import Pcie1762hAdapter
         from adapters.devices.pci1720u_adapter import Pci1720uAdapter
+        from adapters.devices.rm550_adapter import RM550Adapter
         power_supply_adapter = PowerSupplyAdapter()
         pcie_1762h_adapter = Pcie1762hAdapter()
         pci1720u_adapter = Pci1720uAdapter()
+        rm550_adapter = RM550Adapter()
 
     scheduler_factory = lambda: QtSchedulerAdapter()
-    use_cases = UseCases(repository, power_supply_adapter, scheduler_factory, pcie_1762h_adapter, pci1720u_adapter)
+    use_cases = UseCases(repository, power_supply_adapter, scheduler_factory, pcie_1762h_adapter, pci1720u_adapter, rm550_adapter)
 
     # Initialize channels if needed
     use_cases.init_channels()
+    
+    # Try to connect to RM550 with config from DB
+    rm550_config = use_cases.get_rm550_config.execute()
+    if rm550_config:
+        rm550_adapter.connect(rm550_config.port, rm550_config.baudrate)
 
     # Create view models
     main_view_model = MainViewModel(use_cases)

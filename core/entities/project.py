@@ -19,6 +19,7 @@ class Project(Base):
     power_supply: Mapped["PowerSupply"] = relationship(back_populates="project")
     pcie_1762h: Mapped["Pcie1762h"] = relationship(back_populates="project")
     pci1720u: Mapped["Pci1720u"] = relationship(back_populates="project")
+    rm550: Mapped["RM550"] = relationship(back_populates="project")
 
     def __repr__(self) -> str:
         return f"Project(id={self.id!r}, name={self.name!r}"
